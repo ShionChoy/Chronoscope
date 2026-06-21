@@ -1,0 +1,23 @@
+# Brainstorming visual companion (local mockups & server state)
+.superpowers/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Logs
+*.log
+
+# Editor / OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Env
+.env
+.env.local
+.env.*.local
