@@ -1,0 +1,48 @@
+import type { Precision } from './precision'
+import type { TimePoint } from './timepoint'
+
+const RELATIVE: Precision[] = ['ka', 'Ma', 'Ga']
+
+function pad(n: number): string {
+  return String(n).padStart(2, '0')
+}
+function yearNum(y: number): string {
+  return y > 0 ? `${y}` : `公元前${1 - y}`
+}
+function yearLabel(y: number): string {
+  return y > 0 ? `${y}年` : `公元前${1 - y}年`
+}
+
+export function formatTimePoint(tp: TimePoint, nowYear: number): string {
+  if (RELATIVE.includes(tp.precision)) {
+    const ago = nowYear - tp.year
+    if (ago >= 1e8) return `约${(ago / 1e8).toFixed(1)}亿年前`
+    if (ago >= 1e4) return `约${Math.round(ago / 1e4)}万年前`
+    return `约${Math.round(ago)}年前`
+  }
+  const c = tp.civil
+  switch (tp.precision) {
+    case 'second':
+      return `${yearNum(c!.y)}-${pad(c!.mo)}-${pad(c!.d!)} ${pad(c!.h ?? 0)}:${pad(c!.mi ?? 0)}:${pad(c!.s ?? 0)}`
+    case 'minute':
+      return `${yearNum(c!.y)}-${pad(c!.mo)}-${pad(c!.d!)} ${pad(c!.h ?? 0)}:${pad(c!.mi ?? 0)}`
+    case 'hour':
+      return `${yearNum(c!.y)}-${pad(c!.mo)}-${pad(c!.d!)} ${pad(c!.h ?? 0)}时`
+    case 'day':
+      return `${yearNum(c!.y)}-${pad(c!.mo)}-${pad(c!.d!)}`
+    case 'month':
+      return `${yearNum(c!.y)}-${pad(c!.mo)}`
+    case 'year':
+      return yearLabel(tp.year)
+    case 'decade':
+      return tp.year > 0 ? `${tp.year}年代` : `公元前${1 - tp.year}年代`
+    case 'century':
+      return tp.year >= 0
+        ? `${Math.floor(tp.year / 100) + 1}世纪`
+        : `公元前${Math.floor(-tp.year / 100) + 1}世纪`
+    case 'millennium':
+      return `${yearLabel(tp.year)}起千年`
+    default:
+      return yearLabel(tp.year)
+  }
+}
