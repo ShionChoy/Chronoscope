@@ -1,6 +1,9 @@
 # Brainstorming visual companion (local mockups & server state)
 .superpowers/
 
+# Local-only design docs (specs & plans kept out of the published repo)
+docs/
+
 # Dependencies
 node_modules/
 
