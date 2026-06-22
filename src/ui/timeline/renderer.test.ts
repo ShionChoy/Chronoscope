@@ -58,7 +58,7 @@ describe('renderer', () => {
     drawScene(ctx, scene, COLORS, computeLayout(400))
     const count = (name: string) => ctx.calls.filter((c) => c.startsWith(name + '(')).length
     expect(count('clearRect')).toBe(1)
-    expect(count('fillRect')).toBe(3) // span glyph + overview band + lens fill
+    expect(count('fillRect')).toBe(4) // bg + span glyph + overview band + lens fill
     expect(count('arc')).toBe(1) // one point glyph
     expect(count('strokeRect')).toBe(1) // lens border
     expect(count('fillText')).toBe(4) // 2 tick labels + 2 glyph titles

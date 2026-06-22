@@ -40,6 +40,8 @@ export function drawScene(
   layout: TimelineLayout,
 ): void {
   ctx.clearRect(0, 0, scene.width, layout.height)
+  ctx.fillStyle = colors.bg
+  ctx.fillRect(0, 0, scene.width, layout.height)
   ctx.font = '11px ui-monospace, monospace'
   ctx.lineWidth = 1
 

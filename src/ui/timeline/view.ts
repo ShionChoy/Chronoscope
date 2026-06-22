@@ -50,6 +50,11 @@ export function lensFromView(view: LinearView, nowYear: number): Lens {
   return { f0: Math.min(a, b), f1: Math.max(a, b) }
 }
 
+// NOTE: the log overview only represents the past (ago clamped to [1, 14e9]),
+// so a lens at f1=1 maps back to nowYear-1. Dragging the lens on a view that
+// extends to/past "now" therefore snaps max to ~nowYear-1; pan/zoom are
+// unaffected (the view is the source of truth there). Acceptable for a
+// deep-time overview; revisit if precise near-now lens dragging is needed.
 export function viewFromLens(lens: Lens, nowYear: number): LinearView {
   return { min: unprojectLog(lens.f0, nowYear), max: unprojectLog(lens.f1, nowYear) }
 }
