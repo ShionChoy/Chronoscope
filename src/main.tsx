@@ -1,10 +1,39 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
 import App from './App.tsx'
+import './index.css'
+import './ui/styles/tokens.css'
+import { openDatabase, getOrCreateNodeId, createClock } from './data'
+import { createAppStore, resolveInitialTheme, type AppStore } from './state'
+import { decimalFromCivil } from './domain/time'
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+async function bootstrap(): Promise<AppStore> {
+  // openDatabase() returns { db, events, categories, tags }; the object as a
+  // whole satisfies the Database interface (events/categories/tags repos),
+  // while `opened.db` is the raw ChronoscopeDB that getOrCreateNodeId needs.
+  const opened = openDatabase()
+  const nodeId = await getOrCreateNodeId(opened.db)
+  const clock = createClock(nodeId)
+  const now = new Date()
+  const nowYear = decimalFromCivil({
+    y: now.getFullYear(),
+    mo: now.getMonth() + 1,
+    d: now.getDate(),
+    h: now.getHours(),
+    mi: now.getMinutes(),
+    s: now.getSeconds(),
+  })
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const theme = resolveInitialTheme(window.localStorage.getItem('chronoscope.theme'), prefersDark)
+  const app = createAppStore({ db: opened, clock, nowYear, theme })
+  await app.load()
+  return app
+}
+
+bootstrap().then((app) => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <App app={app} />
+    </StrictMode>,
+  )
+})
