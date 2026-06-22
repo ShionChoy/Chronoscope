@@ -1,0 +1,49 @@
+/* Chronoscope design tokens — "Deep Time Instrument".
+   Day = cool drafting paper; Night = deep slate. Same layout & gradient;
+   only the light changes. Warm = deep time, cyan (--now) = now/interactive.
+   Exact values are tunable; the custom-property contract is what's stable.
+   Self-hosted webfonts arrive in Plan 5 (offline PWA); fall back to system. */
+
+:root {
+  --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Day theme (default) */
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --text: #1c2430;
+  --muted: #5c6b7a;
+  --border: #d3dae2;
+  --accent: #0d7d8c;       /* cyan-teal = interactive */
+  --now: #06b6c4;          /* now / active lens */
+  --deep-time: #b4541f;    /* warm = deep time */
+  --danger: #c0392b;
+  --shadow: 0 1px 3px rgba(20, 30, 45, 0.12);
+}
+
+[data-theme='night'] {
+  --bg: #11161d;
+  --surface: #1a212b;
+  --text: #e7edf3;
+  --muted: #9aa7b4;
+  --border: #2b3644;
+  --accent: #2bd4e4;
+  --now: #3fe0ee;
+  --deep-time: #e8843f;
+  --danger: #e06b5e;
+  --shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: var(--font-mono); }
+.display { font-family: var(--font-display); }
