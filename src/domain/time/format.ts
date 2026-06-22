@@ -2,6 +2,7 @@ import type { Precision } from './precision'
 import type { TimePoint } from './timepoint'
 
 const RELATIVE: Precision[] = ['ka', 'Ma', 'Ga']
+const CIVIL_REQUIRED: Precision[] = ['second', 'minute', 'hour', 'day', 'month']
 
 function pad(n: number): string {
   return String(n).padStart(2, '0')
@@ -21,6 +22,10 @@ export function formatTimePoint(tp: TimePoint, nowYear: number): string {
     return `约${Math.round(ago)}年前`
   }
   const c = tp.civil
+  // Degraded-data guard: a fine precision should always carry `civil`, but a
+  // malformed point (e.g. fromYear(2026, 'day')) may not. Fall back to the
+  // year label rather than dereferencing an absent civil and throwing.
+  if (CIVIL_REQUIRED.includes(tp.precision) && !c) return yearLabel(tp.year)
   switch (tp.precision) {
     case 'second':
       return `${yearNum(c!.y)}-${pad(c!.mo)}-${pad(c!.d!)} ${pad(c!.h ?? 0)}:${pad(c!.mi ?? 0)}:${pad(c!.s ?? 0)}`

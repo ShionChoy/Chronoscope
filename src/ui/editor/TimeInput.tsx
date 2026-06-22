@@ -15,9 +15,17 @@ export interface TimeInputProps {
   onChange: (tp: TimePoint | null) => void
 }
 
+// The structured "precision + year" control can only express a bare year, so
+// it offers year-and-coarser precisions. Fine precisions (day/month/hour/…)
+// require civil sub-fields and are entered via the free-text field instead;
+// emitting one here via fromYear would build a malformed (civil-less) TimePoint.
+const COARSE_PRECISIONS: Precision[] = PRECISION_ORDER.slice(PRECISION_ORDER.indexOf('year'))
+
 export function TimeInput({ label, value, nowYear, onChange }: TimeInputProps) {
   const [text, setText] = useState('')
-  const [precision, setPrecision] = useState<Precision>(value?.precision ?? 'year')
+  const [precision, setPrecision] = useState<Precision>(
+    value && COARSE_PRECISIONS.includes(value.precision) ? value.precision : 'year',
+  )
   const [year, setYear] = useState<string>(value ? String(value.year) : '')
 
   const parsed = text.trim() ? parseTimeInput(text, nowYear) : null
@@ -55,7 +63,7 @@ export function TimeInput({ label, value, nowYear, onChange }: TimeInputProps) {
               emitStructured(p, year)
             }}
           >
-            {PRECISION_ORDER.map((p) => (
+            {COARSE_PRECISIONS.map((p) => (
               <option key={p} value={p}>
                 {p}
               </option>

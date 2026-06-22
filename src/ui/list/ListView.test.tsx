@@ -60,4 +60,13 @@ describe('ListView', () => {
     await userEvent.click(screen.getByRole('button', { name: '标题' }))
     expect(app.store.getState().sort).toEqual({ key: 'title', dir: 'desc' })
   })
+
+  it('renders a degraded event (fine precision, missing civil) without crashing', async () => {
+    // Regression: such a record formerly blanked the whole page when the list
+    // formatted its start. It must now render (formatTimePoint falls back).
+    await app.createEvent({ title: '坏点', start: { year: 2026, precision: 'day' } })
+    expect(() => renderList()).not.toThrow()
+    expect(screen.getByText('坏点')).toBeTruthy()
+    expect(screen.getByText('2026年')).toBeTruthy() // year fallback
+  })
 })

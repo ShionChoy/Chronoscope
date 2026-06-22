@@ -19,4 +19,11 @@ describe('formatTimePoint', () => {
     expect(formatTimePoint(fromYear(NOW - 3.8e9, 'Ga'), NOW)).toBe('约38.0亿年前')
     expect(formatTimePoint(fromYear(NOW - 66e6, 'Ma'), NOW)).toBe('约6600万年前')
   })
+  it('does not throw on a fine-precision TimePoint missing civil (degraded data); falls back to the year', () => {
+    // A fine precision normally carries `civil`; a malformed point (e.g. from
+    // fromYear(2026, 'day')) lacks it. The formatter must stay total, not crash.
+    expect(() => formatTimePoint({ year: 2026, precision: 'day' }, NOW)).not.toThrow()
+    expect(formatTimePoint({ year: 2026, precision: 'day' }, NOW)).toBe('2026年')
+    expect(formatTimePoint({ year: -2999, precision: 'minute' }, NOW)).toBe('公元前3000年')
+  })
 })
