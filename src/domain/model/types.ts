@@ -2,8 +2,13 @@ import type { TimePoint } from '../time'
 
 export type Id = string
 
-export interface EventRecord {
+export interface Syncable {
   id: Id
+  updatedAt: string // HLC timestamp
+  deleted: boolean
+}
+
+export interface EventRecord extends Syncable {
   title: string
   start?: TimePoint
   end?: TimePoint
@@ -11,21 +16,17 @@ export interface EventRecord {
   categoryId: Id | null
   tagIds: Id[]
   links: Id[]
-  createdAt: string // HLC timestamp (Plan 2)
-  updatedAt: string // HLC timestamp (Plan 2)
-  deleted: boolean
+  createdAt: string // HLC timestamp
 }
 
-export interface Category {
-  id: Id
+export interface Category extends Syncable {
   name: string
   parentId: Id | null
   color: string
   order: number
 }
 
-export interface Tag {
-  id: Id
+export interface Tag extends Syncable {
   name: string
   color: string
 }
