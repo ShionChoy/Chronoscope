@@ -3,6 +3,7 @@ import { AppStoreProvider, useAppStore, useAppState, applyTheme, persistTheme, t
 import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
 import { ListView } from '../list/ListView'
+import { TimelineView } from '../timeline/TimelineView'
 import { EventEditor } from '../editor/EventEditor'
 import { exportFilename, serializeSnapshot, parseSnapshot } from './transfer'
 import type { Id } from '../../domain/model'
@@ -49,7 +50,7 @@ function ShellBody() {
           {state.view === 'list' ? (
             <ListView onEdit={(id) => setEditor(id)} />
           ) : (
-            <div className="placeholder">时间轴视图开发中（Plan 4）</div>
+            <TimelineView onEdit={(id) => setEditor(id)} />
           )}
         </main>
       </div>

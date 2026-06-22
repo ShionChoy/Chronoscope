@@ -30,10 +30,10 @@ describe('AppShell', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('day')
   })
 
-  it('shows the timeline placeholder when the timeline view is selected', async () => {
-    render(<AppShell app={app} />)
+  it('renders the timeline (a canvas) when the timeline view is selected', async () => {
+    const { container } = render(<AppShell app={app} />)
     await userEvent.click(screen.getByRole('button', { name: '时间轴' }))
-    expect(screen.getByText(/Plan 4/)).toBeTruthy()
+    expect(container.querySelector('canvas')).not.toBeNull()
   })
 
   it('creates an event end-to-end: 新建 → fill → 保存 → appears in the list', async () => {
