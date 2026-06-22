@@ -1,0 +1,72 @@
+// @vitest-environment jsdom
+import { describe, it, expect, beforeEach } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { EventEditor } from './EventEditor'
+import { AppStoreProvider, createAppStore, type AppStore } from '../../state'
+import { createMemoryRepository, type Database, type Clock } from '../../data'
+import type { EventRecord, Category, Tag } from '../../domain/model'
+
+function makeApp(): AppStore {
+  const db: Database = {
+    events: createMemoryRepository<EventRecord>(),
+    categories: createMemoryRepository<Category>(),
+    tags: createMemoryRepository<Tag>(),
+  }
+  let t = 0
+  const clock: Clock = { now: () => `t${++t}` }
+  let i = 0
+  return createAppStore({ db, clock, nowYear: 2026, theme: 'day', genId: () => `id${++i}` })
+}
+
+let app: AppStore
+beforeEach(() => {
+  app = makeApp()
+})
+
+function renderEditor(editingId: string | null, onClose = () => {}) {
+  return render(
+    <AppStoreProvider value={app}>
+      <EventEditor editingId={editingId} onClose={onClose} />
+    </AppStoreProvider>,
+  )
+}
+
+describe('EventEditor', () => {
+  it('blocks save and shows an error when the title is empty', async () => {
+    renderEditor(null)
+    await userEvent.click(screen.getByRole('button', { name: '保存' }))
+    expect(screen.getByText('标题不能为空')).toBeTruthy()
+    expect(app.store.getState().events).toEqual([])
+  })
+
+  it('creates an event with a title and a parsed start', async () => {
+    let closed = false
+    renderEditor(null, () => (closed = true))
+    await userEvent.type(screen.getByLabelText('标题'), '登月')
+    await userEvent.type(screen.getByLabelText('起点'), '1969')
+    await userEvent.click(screen.getByRole('button', { name: '保存' }))
+    const events = app.store.getState().events
+    expect(events.map((e) => e.title)).toEqual(['登月'])
+    expect(events[0].start?.year).toBe(1969)
+    expect(closed).toBe(true)
+  })
+
+  it('edits an existing event', async () => {
+    const id = await app.createEvent({ title: 'old', start: { year: 1, precision: 'year' } })
+    renderEditor(id)
+    const title = screen.getByLabelText('标题') as HTMLInputElement
+    expect(title.value).toBe('old')
+    await userEvent.clear(title)
+    await userEvent.type(title, 'new')
+    await userEvent.click(screen.getByRole('button', { name: '保存' }))
+    expect(app.store.getState().events[0].title).toBe('new')
+  })
+
+  it('deletes in edit mode', async () => {
+    const id = await app.createEvent({ title: 'gone', start: { year: 1, precision: 'year' } })
+    renderEditor(id)
+    await userEvent.click(screen.getByRole('button', { name: '删除' }))
+    expect(app.store.getState().events[0].deleted).toBe(true)
+  })
+})
