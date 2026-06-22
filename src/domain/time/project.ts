@@ -15,3 +15,15 @@ export function projectLog(year: number, nowYear: number): number {
   const span = Math.log10(LOG_AGO_MAX) - Math.log10(LOG_AGO_MIN)
   return 1 - (Math.log10(ago) - Math.log10(LOG_AGO_MIN)) / span
 }
+
+export function unprojectLinear(fraction: number, view: LinearView): number {
+  return view.min + fraction * (view.max - view.min)
+}
+
+export function unprojectLog(fraction: number, nowYear: number): number {
+  if (fraction === 0) return nowYear - LOG_AGO_MAX
+  if (fraction === 1) return nowYear - LOG_AGO_MIN
+  const span = Math.log10(LOG_AGO_MAX) - Math.log10(LOG_AGO_MIN)
+  const ago = Math.pow(10, Math.log10(LOG_AGO_MIN) + (1 - fraction) * span)
+  return nowYear - ago
+}
