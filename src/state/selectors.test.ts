@@ -1,0 +1,111 @@
+import { describe, it, expect } from 'vitest'
+import { descendantCategoryIds, buildCategoryTree, visibleEvents } from './selectors'
+import { initialAppState, type AppState } from './types'
+import { ev, cat, y } from '../test/fixtures'
+
+// helper to build a state with overrides
+function st(over: Partial<AppState>): AppState {
+  return { ...initialAppState(2026, 'day'), ...over }
+}
+
+describe('descendantCategoryIds', () => {
+  it('includes the root and all descendants, skipping deleted', () => {
+    const cats = [
+      cat({ id: 'a' }),
+      cat({ id: 'b', parentId: 'a' }),
+      cat({ id: 'c', parentId: 'b' }),
+      cat({ id: 'd', parentId: 'a', deleted: true }),
+      cat({ id: 'x' }),
+    ]
+    expect([...descendantCategoryIds(cats, 'a')].sort()).toEqual(['a', 'b', 'c'])
+  })
+})
+
+describe('buildCategoryTree', () => {
+  it('nests by parentId and sorts each level by order', () => {
+    const cats = [
+      cat({ id: 'a', order: 1 }),
+      cat({ id: 'b', order: 0 }),
+      cat({ id: 'a1', parentId: 'a', order: 0 }),
+    ]
+    const tree = buildCategoryTree(cats)
+    expect(tree.map((n) => n.category.id)).toEqual(['b', 'a']) // order 0 before 1
+    expect(tree[1].children.map((n) => n.category.id)).toEqual(['a1'])
+  })
+})
+
+describe('visibleEvents', () => {
+  it('excludes tombstones', () => {
+    const s = st({ events: [ev({ id: 'a', start: y(1) }), ev({ id: 'b', start: y(2), deleted: true })] })
+    expect(visibleEvents(s).map((e) => e.id)).toEqual(['a'])
+  })
+  it('filters by category including descendants', () => {
+    const s = st({
+      categories: [cat({ id: 'p' }), cat({ id: 'c', parentId: 'p' })],
+      events: [ev({ id: 'a', categoryId: 'c', start: y(1) }), ev({ id: 'b', categoryId: null, start: y(2) })],
+      filter: { categoryId: 'p', tagIds: [], tagMode: 'or', query: '' },
+    })
+    expect(visibleEvents(s).map((e) => e.id)).toEqual(['a'])
+  })
+  it('filters tags with AND vs OR', () => {
+    const events = [
+      ev({ id: 'a', tagIds: ['t1', 't2'], start: y(1) }),
+      ev({ id: 'b', tagIds: ['t1'], start: y(2) }),
+    ]
+    const or = st({ events, filter: { categoryId: null, tagIds: ['t1', 't2'], tagMode: 'or', query: '' } })
+    expect(visibleEvents(or).map((e) => e.id).sort()).toEqual(['a', 'b'])
+    const and = st({ events, filter: { categoryId: null, tagIds: ['t1', 't2'], tagMode: 'and', query: '' } })
+    expect(visibleEvents(and).map((e) => e.id)).toEqual(['a'])
+  })
+  it('filters by case-insensitive query over title and note', () => {
+    const s = st({
+      events: [ev({ id: 'a', title: '登月', note: 'Apollo', start: y(1) }), ev({ id: 'b', title: 'x', note: 'y', start: y(2) })],
+      filter: { categoryId: null, tagIds: [], tagMode: 'or', query: 'apollo' },
+    })
+    expect(visibleEvents(s).map((e) => e.id)).toEqual(['a'])
+  })
+  it('sorts by start ascending, events without start last', () => {
+    const s = st({
+      events: [ev({ id: 'late', start: y(2000) }), ev({ id: 'none', end: y(5) }), ev({ id: 'early', start: y(1) })],
+      sort: { key: 'start', dir: 'asc' },
+    })
+    // 'none' has no start; falls back to end (y(5)); order by instant: early(1) none(5) late(2000)
+    expect(visibleEvents(s).map((e) => e.id)).toEqual(['early', 'none', 'late'])
+  })
+  it('sorts by title descending', () => {
+    const s = st({ events: [ev({ id: 'a', title: 'alpha', start: y(1) }), ev({ id: 'b', title: 'beta', start: y(2) })], sort: { key: 'title', dir: 'desc' } })
+    expect(visibleEvents(s).map((e) => e.id)).toEqual(['b', 'a'])
+  })
+  it('sorts by category name ascending, uncategorized last', () => {
+    const s = st({
+      categories: [cat({ id: 'c2', name: 'bbb' }), cat({ id: 'c1', name: 'aaa' })],
+      events: [
+        ev({ id: 'none', categoryId: null, start: y(1) }),
+        ev({ id: 'b', categoryId: 'c2', start: y(2) }),
+        ev({ id: 'a', categoryId: 'c1', start: y(3) }),
+      ],
+      sort: { key: 'category', dir: 'asc' },
+    })
+    expect(visibleEvents(s).map((e) => e.id)).toEqual(['a', 'b', 'none'])
+  })
+
+  it('sorts by updatedAt descending', () => {
+    const s = st({
+      events: [
+        ev({ id: 'a', updatedAt: 't1', start: y(1) }),
+        ev({ id: 'b', updatedAt: 't3', start: y(2) }),
+        ev({ id: 'c', updatedAt: 't2', start: y(3) }),
+      ],
+      sort: { key: 'updated', dir: 'desc' },
+    })
+    expect(visibleEvents(s).map((e) => e.id)).toEqual(['b', 'c', 'a'])
+  })
+
+  it('sorts events with neither start nor end last in ascending', () => {
+    const s = st({
+      events: [ev({ id: 'nodate' }), ev({ id: 'dated', start: y(1) })],
+      sort: { key: 'start', dir: 'asc' },
+    })
+    expect(visibleEvents(s).map((e) => e.id)).toEqual(['dated', 'nodate'])
+  })
+})
