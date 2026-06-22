@@ -15,8 +15,13 @@ export function createClock(nodeId: string, physicalNow: () => number = () => Da
       if (pt > lastMillis) {
         lastMillis = pt
         lastCounter = 0
-      } else {
+      } else if (lastCounter < 999999) {
         lastCounter += 1
+      } else {
+        // counter would exceed 6 digits; advance the logical millisecond to
+        // preserve fixed-width strings and strict monotonicity
+        lastMillis += 1
+        lastCounter = 0
       }
       return encode(lastMillis, lastCounter, nodeId)
     },
