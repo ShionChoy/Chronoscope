@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAppStore, useAppState, visibleEvents } from '../../state'
 import type { LinearView } from '../../domain/time'
 import { initialView, zoomView, panView, clampView, viewFromLens } from './view'
+import { spanOf, pinchScale, midpoint } from './gesture'
 import { buildScene, eventInstant, type TimelineScene } from './scene'
 import { drawScene, computeLayout, type TimelineColors } from './renderer'
 import type { Id } from '../../domain/model'
@@ -73,6 +74,8 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
 
   // pointer interactions
   const drag = useRef<{ x: number; mode: 'pan' | 'lens'; moved: boolean } | null>(null)
+  // active pointers by id → clientX, for multi-touch pinch
+  const pointers = useRef(new Map<number, number>())
 
   const fractionAt = (clientX: number): number => {
     const rect = canvasRef.current?.getBoundingClientRect()
@@ -87,6 +90,12 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
   }
 
   const onPointerDown = (e: React.PointerEvent) => {
+    pointers.current.set(e.pointerId, e.clientX)
+    if (pointers.current.size >= 2) {
+      drag.current = null // a pinch began; stop panning/lens-dragging
+      ;(e.target as Element).setPointerCapture?.(e.pointerId)
+      return
+    }
     const rect = canvasRef.current?.getBoundingClientRect()
     const localY = rect ? e.clientY - rect.top : 0
     const inOverview = localY >= layoutRef.current.overviewTop
@@ -95,6 +104,20 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
   }
 
   const onPointerMove = (e: React.PointerEvent) => {
+    if (pointers.current.size >= 2) {
+      const prev = [...pointers.current.values()]
+      pointers.current.set(e.pointerId, e.clientX)
+      const next = [...pointers.current.values()]
+      const scale = pinchScale(spanOf(prev), spanOf(next))
+      if (scale !== 1) {
+        const rect = canvasRef.current?.getBoundingClientRect()
+        const width = rect?.width || 1
+        const frac = Math.min(Math.max((midpoint(next) - (rect?.left ?? 0)) / width, 0), 1)
+        // fingers apart (scale > 1) → zoom in → factor < 1
+        setView((v) => clampView(zoomView(v, frac, 1 / scale), nowYear))
+      }
+      return
+    }
     const d = drag.current
     if (!d) return
     const rect = canvasRef.current?.getBoundingClientRect()
@@ -117,6 +140,7 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
   }
 
   const onPointerUp = (e: React.PointerEvent) => {
+    pointers.current.delete(e.pointerId)
     const d = drag.current
     drag.current = null
     if (!d || d.moved) return
@@ -139,6 +163,11 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
     app.select(null) // clicked empty detail space → dismiss the card
   }
 
+  const onPointerCancel = (e: React.PointerEvent) => {
+    pointers.current.delete(e.pointerId)
+    drag.current = null
+  }
+
   const selectedEvent =
     state.selectedId != null ? state.events.find((e) => e.id === state.selectedId && !e.deleted) ?? null : null
 
@@ -151,6 +180,7 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
+        onPointerCancel={onPointerCancel}
       />
       {selectedEvent && (
         <EventDetailCard
