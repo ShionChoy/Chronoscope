@@ -91,8 +91,8 @@ describe('appStore', () => {
     const seen: number[] = []
     app.store.subscribe(() => seen.push(1))
     app.setFilter({ query: 'moon' })
-    app.select('id1')
     app.setView('timeline')
+    app.select('id1') // after setView, which clears selection
     app.setSort({ key: 'title', dir: 'desc' })
     app.setTheme('night')
     const s = app.store.getState()
@@ -102,6 +102,13 @@ describe('appStore', () => {
     expect(s.sort).toEqual({ key: 'title', dir: 'desc' })
     expect(s.theme).toBe('night')
     expect(seen.length).toBe(5)
+  })
+
+  it('setView clears the selection so a view switch does not carry a stale detail card', () => {
+    app.select('id1')
+    expect(app.store.getState().selectedId).toBe('id1')
+    app.setView('timeline')
+    expect(app.store.getState().selectedId).toBeNull()
   })
 
   it('exportSnapshot/importSnapshot round-trips through the data layer', async () => {

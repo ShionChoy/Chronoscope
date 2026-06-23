@@ -163,7 +163,10 @@ export function createAppStore(deps: AppStoreDeps): AppStore {
       store.setState((s) => ({ ...s, selectedId: id }))
     },
     setView(view) {
-      store.setState((s) => ({ ...s, view }))
+      // Selection is per-view: clearing it on a view switch keeps a row
+      // selected in the list from popping the timeline's detail card (and
+      // vice-versa) for something the user never picked in the new view.
+      store.setState((s) => ({ ...s, view, selectedId: null }))
     },
     setSort(sort) {
       store.setState((s) => ({ ...s, sort }))
