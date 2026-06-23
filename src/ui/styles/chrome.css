@@ -173,3 +173,67 @@ legend {
   border-radius: 12px;
   box-shadow: 0 12px 48px rgb(0 0 0 / 0.4);
 }
+
+/* ---------- list view ---------- */
+.list-view { width: 100%; border-collapse: collapse; font-size: 14px; }
+.list-view thead th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  padding: 8px 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.list-view thead th button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  padding: 0;
+  cursor: pointer;
+}
+.list-view thead th button:hover { color: var(--accent); }
+.list-view tbody tr { cursor: pointer; }
+.list-view tbody td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.list-view tbody tr:hover { background: var(--surface); }
+.list-view td.mono { color: var(--muted); white-space: nowrap; }
+.list-view .empty { padding: 24px; text-align: center; color: var(--muted); cursor: default; }
+
+/* ---------- detail card (augments the base box in tokens.css) ---------- */
+.event-card h3 { font-family: var(--font-display); font-size: 16px; }
+.event-card .category {
+  margin: 2px 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+}
+.event-card .tags li {
+  padding: 2px 8px;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.event-card .links button {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.event-card .markdown { font-size: 14px; line-height: 1.5; }
+.event-card .markdown :first-child { margin-top: 0; }
+.event-card .markdown :last-child { margin-bottom: 0; }
+.event-card .actions { margin-top: 10px; }
