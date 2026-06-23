@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { drawScene, computeLayout, type TimelineColors } from './renderer'
+import { drawScene, computeLayout, densityHeight, type TimelineColors } from './renderer'
 import type { TimelineScene } from './scene'
 
 const COLORS: TimelineColors = {
@@ -43,7 +43,7 @@ const scene: TimelineScene = {
     ],
     rowCount: 2,
   },
-  overview: { markers: [{ x: 100, eventId: 'a' }, { x: 900, eventId: 'b' }], lens: { x0: 200, x1: 600 } },
+  overview: { markers: [{ x: 100, count: 1, eventId: 'a' }, { x: 900, count: 1, eventId: 'b' }], lens: { x0: 200, x1: 600 } },
 }
 
 describe('renderer', () => {
@@ -52,6 +52,12 @@ describe('renderer', () => {
     expect(l.overviewHeight).toBe(48)
     expect(l.overviewTop).toBe(400 - 48)
     expect(l.glyphTop).toBeGreaterThan(l.tickLabelH - 1)
+  })
+  it('densityHeight scales from a floor up to the full band by count', () => {
+    expect(densityHeight(1, 1)).toBe(1) // no clustering anywhere → full height
+    expect(densityHeight(1, 10)).toBeGreaterThanOrEqual(0.4)
+    expect(densityHeight(10, 10)).toBeCloseTo(1, 6)
+    expect(densityHeight(2, 10)).toBeLessThan(densityHeight(8, 10))
   })
   it('draws ticks, a span rect, a point arc, labels, and the lens', () => {
     const ctx = fakeCtx()

@@ -33,6 +33,11 @@ export function computeLayout(height: number): TimelineLayout {
   }
 }
 
+export function densityHeight(count: number, maxCount: number): number {
+  if (maxCount <= 1) return 1
+  return 0.4 + 0.6 * (Math.log(count + 1) / Math.log(maxCount + 1))
+}
+
 export function drawScene(
   ctx: CanvasRenderingContext2D,
   scene: TimelineScene,
@@ -84,13 +89,15 @@ export function drawScene(
   // overview band
   ctx.fillStyle = colors.surface
   ctx.fillRect(0, layout.overviewTop, scene.width, layout.overviewHeight)
-  const markY0 = layout.overviewTop + 6
-  const markY1 = layout.overviewTop + layout.overviewHeight - 6
+  const midY = layout.overviewTop + layout.overviewHeight / 2
+  const maxHalf = layout.overviewHeight / 2 - 6
+  const maxCount = scene.overview.markers.reduce((m, k) => Math.max(m, k.count), 1)
   ctx.strokeStyle = colors.deepTime
   for (const m of scene.overview.markers) {
+    const half = maxHalf * densityHeight(m.count, maxCount)
     ctx.beginPath()
-    ctx.moveTo(m.x, markY0)
-    ctx.lineTo(m.x, markY1)
+    ctx.moveTo(m.x, midY - half)
+    ctx.lineTo(m.x, midY + half)
     ctx.stroke()
   }
 
