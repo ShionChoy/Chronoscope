@@ -2,7 +2,7 @@
    Day = cool drafting paper; Night = deep slate. Same layout & gradient;
    only the light changes. Warm = deep time, cyan (--now) = now/interactive.
    Exact values are tunable; the custom-property contract is what's stable.
-   Self-hosted webfonts arrive in Plan 5 (offline PWA); fall back to system. */
+   Self-hosted via @fontsource (imported in main.tsx); system fonts fall back. */
 
 :root {
   --font-display: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
@@ -51,7 +51,7 @@ body {
 /* Minimal structural layout so the timeline canvas resolves a definite height
    (percentage heights need a definite-height ancestor chain). Full visual
    design — sidebar/topbar styling, spacing, the Deep Time Instrument look —
-   is Plan 5; this is only the height/flex skeleton the canvas requires. */
+   is Plan 6; this is only the height/flex skeleton the canvas requires. */
 html, body, #root { height: 100%; }
 .app-shell { display: flex; flex-direction: column; height: 100%; }
 .app-shell .body { flex: 1; display: flex; min-height: 0; }
