@@ -1,0 +1,83 @@
+/* Chronoscope "Deep Time Instrument" chrome — applies the tokens.css contract
+   to the existing component classNames. Day/night differ only via variables;
+   structure is identical across themes. tokens.css owns the contract + the
+   height/flex skeleton; this file is the skin (imported after tokens). */
+
+:root { --radius: 8px; }
+
+/* ---------- top bar ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  height: 52px;
+  padding: 0 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+.topbar .title { font-size: 18px; font-weight: 600; letter-spacing: 0.02em; }
+.topbar .spacer { flex: 1; }
+
+.view-switch {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.view-switch button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+.view-switch button.active { background: var(--accent); color: var(--surface); }
+
+.import-label { cursor: pointer; }
+
+/* ---------- sidebar / filters ---------- */
+.sidebar {
+  flex: 0 0 248px;
+  width: 248px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow: auto;
+}
+.sidebar section { display: flex; flex-direction: column; gap: 8px; }
+.sidebar h2 {
+  margin: 0;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.sidebar label { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+/* the search label (wraps a text input) stacks; tag labels (checkbox) stay inline */
+.sidebar label:has(> input:not([type='checkbox'])) { flex-direction: column; align-items: stretch; gap: 4px; }
+.sidebar input:not([type]) { width: 100%; }
+
+.category-tree { list-style: none; margin: 0; padding: 0; }
+.category-tree ul { list-style: none; margin: 0 0 0 12px; padding: 0; }
+.category-tree button {
+  width: 100%;
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.category-tree button:hover { background: var(--bg); }
+.category-tree button.active { background: var(--accent); color: var(--surface); }
+
+/* ---------- view area ---------- */
+.view-area { background: var(--bg); }
