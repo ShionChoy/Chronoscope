@@ -21,6 +21,7 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
   const [note, setNote] = useState(existing?.note ?? '')
   const [categoryId, setCategoryId] = useState<Id | ''>(existing?.categoryId ?? '')
   const [tagIds, setTagIds] = useState<Id[]>(existing?.tagIds ?? [])
+  const [links, setLinks] = useState<Id[]>(existing?.links ?? [])
   const [errors, setErrors] = useState<string[]>([])
 
   const liveCategories = state.categories.filter((c) => !c.deleted)
@@ -28,6 +29,10 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
 
   const toggleTag = (id: Id) =>
     setTagIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+
+  const linkCandidates = state.events.filter((e) => !e.deleted && e.id !== editingId)
+  const toggleLink = (id: Id) =>
+    setLinks((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
 
   const save = async () => {
     const result = validateEvent({ title, start: start ?? undefined, end: end ?? undefined })
@@ -42,6 +47,7 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
       note,
       categoryId: categoryId === '' ? null : categoryId,
       tagIds,
+      links,
     }
     if (editingId) await app.updateEvent(editingId, fields)
     else await app.createEvent(fields)
@@ -93,6 +99,17 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
           <label key={t.id}>
             <input type="checkbox" checked={tagIds.includes(t.id)} onChange={() => toggleTag(t.id)} />
             {t.name}
+          </label>
+        ))}
+      </fieldset>
+
+      <fieldset>
+        <legend>关联</legend>
+        {linkCandidates.length === 0 && <p className="muted">暂无可关联的事件</p>}
+        {linkCandidates.map((e) => (
+          <label key={e.id}>
+            <input type="checkbox" checked={links.includes(e.id)} onChange={() => toggleLink(e.id)} />
+            {e.title}
           </label>
         ))}
       </fieldset>

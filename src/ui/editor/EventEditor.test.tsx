@@ -69,4 +69,15 @@ describe('EventEditor', () => {
     await userEvent.click(screen.getByRole('button', { name: '删除' }))
     expect(app.store.getState().events[0].deleted).toBe(true)
   })
+
+  it('saves links to other events', async () => {
+    const other = await app.createEvent({ title: '另一个', start: { year: 1, precision: 'year' } })
+    renderEditor(null)
+    await userEvent.type(screen.getByLabelText('标题'), '主事件')
+    await userEvent.type(screen.getByLabelText('起点'), '2000')
+    await userEvent.click(screen.getByLabelText('另一个'))
+    await userEvent.click(screen.getByRole('button', { name: '保存' }))
+    const created = app.store.getState().events.find((e) => e.title === '主事件')!
+    expect(created.links).toEqual([other])
+  })
 })
