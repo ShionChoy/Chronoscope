@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { drawScene, computeLayout, densityHeight, type TimelineColors } from './renderer'
+import { drawScene, computeLayout, densityHeight, mixHex, type TimelineColors } from './renderer'
 import type { TimelineScene } from './scene'
 
 const COLORS: TimelineColors = {
@@ -11,9 +11,11 @@ const COLORS: TimelineColors = {
 // style assignments so we can assert what was drawn without a real canvas.
 function fakeCtx() {
   const calls: string[] = []
+  const styles: string[] = []
   const method = (name: string) => (...args: unknown[]) => calls.push(`${name}(${args.length})`)
   const ctx = {
     calls,
+    styles,
     clearRect: method('clearRect'),
     beginPath: method('beginPath'),
     moveTo: method('moveTo'),
@@ -24,13 +26,17 @@ function fakeCtx() {
     arc: method('arc'),
     fill: method('fill'),
     fillText: method('fillText'),
+    createLinearGradient: (...args: unknown[]) => {
+      calls.push(`createLinearGradient(${args.length})`)
+      return { addColorStop: () => {} }
+    },
     set fillStyle(_v: string) {},
-    set strokeStyle(_v: string) {},
+    set strokeStyle(v: string) { styles.push(v) },
     set font(_v: string) {},
     set lineWidth(_v: number) {},
     set globalAlpha(_v: number) {},
   }
-  return ctx as unknown as CanvasRenderingContext2D & { calls: string[] }
+  return ctx as unknown as CanvasRenderingContext2D & { calls: string[]; styles: string[] }
 }
 
 const scene: TimelineScene = {
@@ -59,14 +65,39 @@ describe('renderer', () => {
     expect(densityHeight(10, 10)).toBeCloseTo(1, 6)
     expect(densityHeight(2, 10)).toBeLessThan(densityHeight(8, 10))
   })
+  describe('mixHex', () => {
+    it('returns the endpoints at t=0 and t=1', () => {
+      expect(mixHex('#000000', '#ffffff', 0)).toBe('#000000')
+      expect(mixHex('#000000', '#ffffff', 1)).toBe('#ffffff')
+    })
+    it('blends channels at the midpoint', () => {
+      expect(mixHex('#000000', '#ffffff', 0.5)).toBe('#808080')
+    })
+    it('clamps t outside [0,1]', () => {
+      expect(mixHex('#000000', '#ffffff', -1)).toBe('#000000')
+      expect(mixHex('#000000', '#ffffff', 2)).toBe('#ffffff')
+    })
+    it('expands 3-digit shorthand hex', () => {
+      expect(mixHex('#000', '#fff', 1)).toBe('#ffffff')
+    })
+  })
   it('draws ticks, a span rect, a point arc, labels, and the lens', () => {
     const ctx = fakeCtx()
     drawScene(ctx, scene, COLORS, computeLayout(400))
     const count = (name: string) => ctx.calls.filter((c) => c.startsWith(name + '(')).length
     expect(count('clearRect')).toBe(1)
-    expect(count('fillRect')).toBe(4) // bg + span glyph + overview band + lens fill
+    expect(count('fillRect')).toBe(5) // bg + span glyph + overview band + band wash + lens fill
     expect(count('arc')).toBe(1) // one point glyph
     expect(count('strokeRect')).toBe(1) // lens border
     expect(count('fillText')).toBe(4) // 2 tick labels + 2 glyph titles
+  })
+  it('washes the overview with a deep-time→now gradient and colors markers by depth', () => {
+    const ctx = fakeCtx()
+    drawScene(ctx, scene, COLORS, computeLayout(400))
+    const count = (name: string) => ctx.calls.filter((c) => c.startsWith(name + '(')).length
+    expect(count('createLinearGradient')).toBe(1)
+    // markers sit at x=100 and x=900 over width 1000 → depth 0.1 and 0.9
+    expect(ctx.styles).toContain(mixHex(COLORS.deepTime, COLORS.now, 0.1))
+    expect(ctx.styles).toContain(mixHex(COLORS.deepTime, COLORS.now, 0.9))
   })
 })
