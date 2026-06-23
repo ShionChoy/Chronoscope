@@ -1,4 +1,6 @@
+import { useSyncExternalStore } from 'react'
 import { useAppStore, useAppState } from '../../state'
+import type { FileSync } from '../../data'
 
 export interface TopBarProps {
   onNew: () => void
@@ -6,11 +8,18 @@ export interface TopBarProps {
   onImportFile: (file: File) => void
   onToggleSidebar?: () => void
   sidebarOpen?: boolean
+  fileSync?: FileSync
 }
 
-export function TopBar({ onNew, onExport, onImportFile, onToggleSidebar, sidebarOpen = false }: TopBarProps) {
+const NOOP_SUBSCRIBE = () => () => {}
+
+export function TopBar({ onNew, onExport, onImportFile, onToggleSidebar, sidebarOpen = false, fileSync }: TopBarProps) {
   const app = useAppStore()
   const state = useAppState()
+  const fileBound = useSyncExternalStore(
+    fileSync ? fileSync.subscribe : NOOP_SUBSCRIBE,
+    () => fileSync?.isBound() ?? false,
+  )
 
   return (
     <header className="topbar">
@@ -43,6 +52,16 @@ export function TopBar({ onNew, onExport, onImportFile, onToggleSidebar, sidebar
       <button type="button" onClick={onNew}>
         新建
       </button>
+      {fileSync?.supported && (
+        <button type="button" onClick={() => void fileSync.bind()}>
+          {fileBound ? '已绑定文件' : '绑定文件'}
+        </button>
+      )}
+      {fileSync?.supported && fileBound && (
+        <button type="button" onClick={() => void fileSync.reload()}>
+          重载
+        </button>
+      )}
       <button type="button" onClick={onExport}>
         导出
       </button>

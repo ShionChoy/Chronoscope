@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AppStoreProvider, useAppStore, useAppState, applyTheme, persistTheme, type AppStore } from '../../state'
+import type { FileSync } from '../../data'
 import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
 import { ListView } from '../list/ListView'
@@ -11,7 +12,7 @@ import type { Id } from '../../domain/model'
 
 type EditorTarget = Id | 'new' | null
 
-function ShellBody() {
+function ShellBody({ fileSync }: { fileSync?: FileSync }) {
   const app = useAppStore()
   const state = useAppState()
   const [editor, setEditor] = useState<EditorTarget>(null)
@@ -52,6 +53,7 @@ function ShellBody() {
         onImportFile={doImport}
         sidebarOpen={drawerOpen}
         onToggleSidebar={() => setDrawerOpen((o) => !o)}
+        fileSync={fileSync}
       />
       <div className="body">
         <Sidebar open={drawerOpen} />
@@ -77,12 +79,13 @@ function ShellBody() {
 
 export interface AppShellProps {
   app: AppStore
+  fileSync?: FileSync
 }
 
-export function AppShell({ app }: AppShellProps) {
+export function AppShell({ app, fileSync }: AppShellProps) {
   return (
     <AppStoreProvider value={app}>
-      <ShellBody />
+      <ShellBody fileSync={fileSync} />
     </AppStoreProvider>
   )
 }

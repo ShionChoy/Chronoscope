@@ -9,11 +9,23 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './ui/styles/tokens.css'
 import './ui/styles/chrome.css'
-import { openDatabase, getOrCreateNodeId, createClock } from './data'
+import {
+  openDatabase,
+  getOrCreateNodeId,
+  createClock,
+  createFileSync,
+  fileAccessSupported,
+  pickSaveFile,
+  ensureWritable,
+  saveHandle,
+  loadHandle,
+  type FileSync,
+  type BoundHandle,
+} from './data'
 import { createAppStore, resolveInitialTheme, type AppStore } from './state'
 import { decimalFromCivil } from './domain/time'
 
-async function bootstrap(): Promise<AppStore> {
+async function bootstrap(): Promise<{ app: AppStore; fileSync: FileSync }> {
   // openDatabase() returns { db, events, categories, tags }; the object as a
   // whole satisfies the Database interface (events/categories/tags repos),
   // while `opened.db` is the raw ChronoscopeDB that getOrCreateNodeId needs.
@@ -33,13 +45,26 @@ async function bootstrap(): Promise<AppStore> {
   const theme = resolveInitialTheme(window.localStorage.getItem('chronoscope.theme'), prefersDark)
   const app = createAppStore({ db: opened, clock, nowYear, theme })
   await app.load()
-  return app
+
+  const fileSync = createFileSync({
+    supported: fileAccessSupported(),
+    pickFile: () => pickSaveFile('chronoscope.json') as Promise<BoundHandle>,
+    loadHandle: () => loadHandle(opened.db) as Promise<BoundHandle | null>,
+    saveHandle: (handle) => saveHandle(opened.db, handle as FileSystemFileHandle),
+    ensureWritable,
+    getSnapshot: () => app.exportSnapshot(),
+    applySnapshot: (file) => app.importSnapshot(file),
+    subscribe: (listener) => app.store.subscribe(listener),
+  })
+  void fileSync.reconnect() // silently re-arm if a handle was previously bound
+
+  return { app, fileSync }
 }
 
-bootstrap().then((app) => {
+bootstrap().then(({ app, fileSync }) => {
   createRoot(document.getElementById('root')!).render(
     <StrictMode>
-      <App app={app} />
+      <App app={app} fileSync={fileSync} />
     </StrictMode>,
   )
 })
