@@ -79,3 +79,18 @@ html, body, #root { height: 100%; }
 .event-card .time { color: var(--muted); margin: 4px 0; }
 .event-card ul { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .event-card .links button { cursor: pointer; }
+
+/* a11y baseline (spec §9): visible keyboard focus + honor reduced-motion. */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus:not(:focus-visible) { outline: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.muted { color: var(--muted); }
