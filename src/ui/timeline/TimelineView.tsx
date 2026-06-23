@@ -5,6 +5,8 @@ import { initialView, zoomView, panView, clampView, viewFromLens } from './view'
 import { buildScene, eventInstant, type TimelineScene } from './scene'
 import { drawScene, computeLayout, type TimelineColors } from './renderer'
 import type { Id } from '../../domain/model'
+import { buildEventCard } from './card'
+import { EventDetailCard } from './EventDetailCard'
 
 export interface TimelineViewProps {
   onEdit: (id: Id) => void
@@ -131,14 +133,17 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
       const within = x >= g.xStart - 6 && x <= Math.max(g.xEnd, g.xStart) + 6 && y >= gy - 4 && y <= gy + 12
       if (within) {
         app.select(g.eventId)
-        onEdit(g.eventId)
         return
       }
     }
+    app.select(null) // clicked empty detail space → dismiss the card
   }
 
+  const selectedEvent =
+    state.selectedId != null ? state.events.find((e) => e.id === state.selectedId && !e.deleted) ?? null : null
+
   return (
-    <div ref={wrapRef} className="timeline-view" style={{ width: '100%', height: '100%' }}>
+    <div ref={wrapRef} className="timeline-view" style={{ position: 'relative', width: '100%', height: '100%' }}>
       <canvas
         ref={canvasRef}
         style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
@@ -147,6 +152,18 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
       />
+      {selectedEvent && (
+        <EventDetailCard
+          data={buildEventCard(
+            selectedEvent,
+            { categories: state.categories, tags: state.tags, events: state.events },
+            nowYear,
+          )}
+          onEdit={() => onEdit(selectedEvent.id)}
+          onClose={() => app.select(null)}
+          onSelectLink={(id) => app.select(id)}
+        />
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { TimelineView } from './TimelineView'
 import { AppStoreProvider, createAppStore, type AppStore } from '../../state'
 import { createMemoryRepository, type Database, type Clock } from '../../data'
@@ -41,5 +41,11 @@ describe('TimelineView', () => {
     await app.createEvent({ title: '区间', start: { year: 1950, precision: 'year' }, end: { year: 1980, precision: 'year' } })
     expect(() => renderTimeline()).not.toThrow()
     expect(document.querySelector('canvas')).not.toBeNull()
+  })
+  it('shows a detail card for the selected event', async () => {
+    const id = await app.createEvent({ title: '登月', start: { year: 1969, precision: 'year' } })
+    app.select(id)
+    renderTimeline()
+    expect(screen.getByText('登月')).toBeTruthy()
   })
 })

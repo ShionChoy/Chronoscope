@@ -57,3 +57,25 @@ html, body, #root { height: 100%; }
 .app-shell .body { flex: 1; display: flex; min-height: 0; }
 .sidebar { flex: 0 0 auto; overflow: auto; }
 .view-area { flex: 1; min-height: 0; overflow: auto; }
+
+/* --- detail card (Plan 5; visual polish in Plan 6) --- */
+.timeline-view { position: relative; }
+.event-card {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  max-width: 320px;
+  max-height: calc(100% - 64px);
+  overflow: auto;
+  padding: 12px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.25);
+}
+.event-card header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.event-card h3 { margin: 0; }
+.event-card .time { color: var(--muted); margin: 4px 0; }
+.event-card ul { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.event-card .links button { cursor: pointer; }
