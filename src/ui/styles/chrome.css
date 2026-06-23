@@ -237,3 +237,29 @@ legend {
 .event-card .markdown :first-child { margin-top: 0; }
 .event-card .markdown :last-child { margin-bottom: 0; }
 .event-card .actions { margin-top: 10px; }
+
+/* ---------- responsive drawer (phone) ---------- */
+.drawer-toggle { display: none; border: 0; background: transparent; font-size: 20px; padding: 4px 8px; }
+.drawer-backdrop { display: none; }
+
+@media (max-width: 640px) {
+  .drawer-toggle { display: inline-flex; align-items: center; }
+  .sidebar {
+    position: fixed;
+    top: 52px;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    box-shadow: var(--shadow);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 52px 0 0 0;
+    z-index: 39;
+    background: rgb(0 0 0 / 0.4);
+  }
+}

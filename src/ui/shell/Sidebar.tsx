@@ -30,7 +30,7 @@ function CategoryTree({
   )
 }
 
-export function Sidebar() {
+export function Sidebar({ open = false }: { open?: boolean }) {
   const app = useAppStore()
   const state = useAppState()
   const tree = buildCategoryTree(state.categories)
@@ -45,7 +45,7 @@ export function Sidebar() {
   }
 
   return (
-    <aside className="sidebar">
+    <aside id="sidebar" className={open ? 'sidebar open' : 'sidebar'}>
       <section>
         <label>
           搜索

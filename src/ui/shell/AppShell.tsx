@@ -16,6 +16,7 @@ function ShellBody() {
   const state = useAppState()
   const [editor, setEditor] = useState<EditorTarget>(null)
   const trapRef = useFocusTrap<HTMLDivElement>(editor !== null, () => setEditor(null))
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   useEffect(() => {
     applyTheme(document.documentElement, state.theme)
@@ -45,9 +46,15 @@ function ShellBody() {
 
   return (
     <div className="app-shell">
-      <TopBar onNew={() => setEditor('new')} onExport={doExport} onImportFile={doImport} />
+      <TopBar
+        onNew={() => setEditor('new')}
+        onExport={doExport}
+        onImportFile={doImport}
+        sidebarOpen={drawerOpen}
+        onToggleSidebar={() => setDrawerOpen((o) => !o)}
+      />
       <div className="body">
-        <Sidebar />
+        <Sidebar open={drawerOpen} />
         <main className="view-area">
           {state.view === 'list' ? (
             <ListView onEdit={(id) => setEditor(id)} />
@@ -55,6 +62,7 @@ function ShellBody() {
             <TimelineView onEdit={(id) => setEditor(id)} />
           )}
         </main>
+        {drawerOpen && <div className="drawer-backdrop" onClick={() => setDrawerOpen(false)} />}
       </div>
       {editor !== null && (
         <div className="modal-overlay" onClick={() => setEditor(null)}>

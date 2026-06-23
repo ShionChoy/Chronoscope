@@ -4,14 +4,26 @@ export interface TopBarProps {
   onNew: () => void
   onExport: () => void
   onImportFile: (file: File) => void
+  onToggleSidebar?: () => void
+  sidebarOpen?: boolean
 }
 
-export function TopBar({ onNew, onExport, onImportFile }: TopBarProps) {
+export function TopBar({ onNew, onExport, onImportFile, onToggleSidebar, sidebarOpen = false }: TopBarProps) {
   const app = useAppStore()
   const state = useAppState()
 
   return (
     <header className="topbar">
+      <button
+        type="button"
+        className="drawer-toggle"
+        aria-label="菜单"
+        aria-controls="sidebar"
+        aria-expanded={sidebarOpen}
+        onClick={onToggleSidebar}
+      >
+        ☰
+      </button>
       <span className="display title">Chronoscope</span>
 
       <nav className="view-switch">

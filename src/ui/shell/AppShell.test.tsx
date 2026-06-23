@@ -44,4 +44,13 @@ describe('AppShell', () => {
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     expect(screen.getByText('宇宙大爆炸')).toBeTruthy()
   })
+
+  it('toggles the sidebar drawer via the menu button', async () => {
+    const { container } = render(<AppShell app={app} />)
+    const toggle = screen.getByRole('button', { name: '菜单' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    await userEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(container.querySelector('.sidebar')?.classList.contains('open')).toBe(true)
+  })
 })
