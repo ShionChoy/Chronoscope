@@ -81,3 +81,95 @@
 
 /* ---------- view area ---------- */
 .view-area { background: var(--bg); }
+
+/* ---------- buttons & form controls ---------- */
+button {
+  font: inherit;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+}
+button:hover { border-color: var(--accent); }
+/* class-scoped button rules (.view-switch/.category-tree/.list-view th) keep
+   their own look via higher specificity — they are intentionally not boxed. */
+
+input, select, textarea {
+  font: inherit;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+textarea { width: 100%; min-height: 72px; resize: vertical; }
+input[type='checkbox'] { width: auto; padding: 0; }
+
+/* ---------- event editor ---------- */
+.event-editor { display: flex; flex-direction: column; gap: 14px; }
+.event-editor > label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+.event-editor > label > input,
+.event-editor > label > select,
+.event-editor textarea { width: 100%; }
+
+fieldset { margin: 0; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius); }
+legend {
+  padding: 0 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+/* tag / link checkbox fieldsets (not the time-input fieldset) lay their
+   options out inline */
+.event-editor > fieldset:not(.time-input) label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 12px;
+  font-size: 14px;
+}
+
+.time-input { display: flex; flex-direction: column; gap: 8px; }
+.time-input > label { display: flex; flex-direction: column; gap: 4px; }
+.time-input .preview { color: var(--muted); font-size: 13px; }
+.time-input .structured { display: flex; gap: 12px; }
+.time-input .structured label { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+
+.errors {
+  margin: 0;
+  padding: 8px 12px;
+  list-style: none;
+  color: var(--danger);
+  background: var(--surface);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius);
+}
+
+.event-editor .actions { display: flex; gap: 8px; margin-top: 4px; }
+.event-editor .actions .danger { margin-left: auto; border-color: var(--danger); color: var(--danger); }
+.event-editor .actions .danger:hover { background: var(--danger); color: var(--surface); }
+
+/* ---------- modal ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow: auto;
+  background: rgb(0 0 0 / 0.5);
+}
+.modal {
+  width: 100%;
+  max-width: 520px;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 48px rgb(0 0 0 / 0.4);
+}
