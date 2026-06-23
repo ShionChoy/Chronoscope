@@ -31,7 +31,8 @@ export interface SceneGlyph {
 
 export interface SceneMarker {
   x: number
-  eventId: Id
+  count: number
+  eventId?: Id
 }
 
 export interface TimelineScene {
@@ -49,6 +50,24 @@ export interface BuildSceneInput {
 }
 
 const LABEL_GAP = 80
+const MARKER_BUCKET_PX = 6
+
+export function aggregateMarkers(items: { x: number; eventId: Id }[], bucketPx: number): SceneMarker[] {
+  const buckets = new Map<number, { x: number; eventId: Id }[]>()
+  for (const it of items) {
+    const key = Math.floor(it.x / bucketPx)
+    const arr = buckets.get(key)
+    if (arr) arr.push(it)
+    else buckets.set(key, [it])
+  }
+  const out: SceneMarker[] = []
+  for (const arr of buckets.values()) {
+    const x = arr.reduce((s, it) => s + it.x, 0) / arr.length
+    out.push({ x, count: arr.length, eventId: arr.length === 1 ? arr[0].eventId : undefined })
+  }
+  out.sort((a, b) => a.x - b.x)
+  return out
+}
 
 export function eventInstant(e: EventRecord): number | null {
   if (e.start) return instantOf(e.start)
@@ -119,12 +138,13 @@ export function buildScene(input: BuildSceneInput): TimelineScene {
   }))
   const rowCount = glyphs.reduce((m, g) => Math.max(m, g.row + 1), 0)
 
-  const markers: SceneMarker[] = []
+  const rawMarkers: { x: number; eventId: Id }[] = []
   for (const e of events) {
     const inst = eventInstant(e)
     if (inst === null) continue
-    markers.push({ x: projectLog(inst, nowYear) * width, eventId: e.id })
+    rawMarkers.push({ x: projectLog(inst, nowYear) * width, eventId: e.id })
   }
+  const markers = aggregateMarkers(rawMarkers, MARKER_BUCKET_PX)
 
   const lens = lensFromView(view, nowYear)
   return {

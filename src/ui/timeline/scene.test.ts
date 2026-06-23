@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildScene, eventInstant } from './scene'
+import { buildScene, eventInstant, aggregateMarkers } from './scene'
 import { ev, y } from '../../test/fixtures'
 
 const base = { view: { min: 2000, max: 2100 }, nowYear: 2026, width: 1000, selectedId: null }
@@ -58,5 +58,23 @@ describe('buildScene', () => {
       expect(t.x).toBeLessThanOrEqual(base.width)
       expect(typeof t.label).toBe('string')
     }
+  })
+})
+
+describe('aggregateMarkers', () => {
+  it('clusters nearby markers into one with a count and drops the singleton id', () => {
+    const out = aggregateMarkers(
+      [{ x: 1, eventId: 'a' }, { x: 2, eventId: 'b' }, { x: 100, eventId: 'c' }],
+      6,
+    )
+    expect(out.length).toBe(2)
+    const big = out.find((m) => m.count === 2)!
+    expect(big.eventId).toBeUndefined()
+    const solo = out.find((m) => m.count === 1)!
+    expect(solo.eventId).toBe('c')
+  })
+  it('keeps the eventId for a lone marker', () => {
+    const out = aggregateMarkers([{ x: 42, eventId: 'z' }], 6)
+    expect(out).toEqual([{ x: 42, count: 1, eventId: 'z' }])
   })
 })
