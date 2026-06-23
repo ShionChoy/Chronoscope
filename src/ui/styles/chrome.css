@@ -61,7 +61,7 @@
 .sidebar label { display: flex; align-items: center; gap: 6px; font-size: 14px; }
 /* the search label (wraps a text input) stacks; tag labels (checkbox) stay inline */
 .sidebar label:has(> input:not([type='checkbox'])) { flex-direction: column; align-items: stretch; gap: 4px; }
-.sidebar input:not([type]) { width: 100%; }
+.sidebar input:not([type='checkbox']) { width: 100%; }
 
 .category-tree { list-style: none; margin: 0; padding: 0; }
 .category-tree ul { list-style: none; margin: 0 0 0 12px; padding: 0; }
