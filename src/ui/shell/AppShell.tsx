@@ -6,6 +6,7 @@ import { ListView } from '../list/ListView'
 import { TimelineView } from '../timeline/TimelineView'
 import { EventEditor } from '../editor/EventEditor'
 import { exportFilename, serializeSnapshot, parseSnapshot } from './transfer'
+import { useFocusTrap } from './useFocusTrap'
 import type { Id } from '../../domain/model'
 
 type EditorTarget = Id | 'new' | null
@@ -14,6 +15,7 @@ function ShellBody() {
   const app = useAppStore()
   const state = useAppState()
   const [editor, setEditor] = useState<EditorTarget>(null)
+  const trapRef = useFocusTrap<HTMLDivElement>(editor !== null, () => setEditor(null))
 
   useEffect(() => {
     applyTheme(document.documentElement, state.theme)
@@ -56,7 +58,7 @@ function ShellBody() {
       </div>
       {editor !== null && (
         <div className="modal-overlay" onClick={() => setEditor(null)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal" ref={trapRef} aria-modal="true" onClick={(e) => e.stopPropagation()}>
             <EventEditor editingId={editor === 'new' ? null : editor} onClose={() => setEditor(null)} />
           </div>
         </div>
