@@ -6,11 +6,17 @@ export interface MetaRow {
   value: string
 }
 
+export interface HandleRow {
+  key: string
+  handle: FileSystemFileHandle
+}
+
 export class ChronoscopeDB extends Dexie {
   events!: Table<EventRecord, string>
   categories!: Table<Category, string>
   tags!: Table<Tag, string>
   meta!: Table<MetaRow, string>
+  handles!: Table<HandleRow, string>
 
   constructor(name = 'chronoscope') {
     super(name)
@@ -19,6 +25,9 @@ export class ChronoscopeDB extends Dexie {
       categories: 'id',
       tags: 'id',
       meta: 'key',
+    })
+    this.version(2).stores({
+      handles: 'key',
     })
   }
 }
