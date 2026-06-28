@@ -1,4 +1,4 @@
-import type { Precision } from './precision'
+import { PRECISION_YEARS, type Precision } from './precision'
 import type { TimePoint } from './timepoint'
 
 const RELATIVE: Precision[] = ['ka', 'Ma', 'Ga']
@@ -17,9 +17,14 @@ function yearLabel(y: number): string {
 export function formatTimePoint(tp: TimePoint, nowYear: number): string {
   if (RELATIVE.includes(tp.precision)) {
     const ago = nowYear - tp.year
-    if (ago >= 1e8) return `约${(ago / 1e8).toFixed(1)}亿年前`
-    if (ago >= 1e4) return `约${Math.round(ago / 1e4)}万年前`
-    return `约${Math.round(ago)}年前`
+    const abs = Math.abs(ago)
+    // Distances under half the precision's own unit are noise at this scale
+    // (e.g. ~2026 years against a billion-year tick) → "现在", not a tiny number.
+    if (abs < PRECISION_YEARS[tp.precision] / 2) return '现在'
+    const dir = ago > 0 ? '前' : '后' // future points read "…年后", never negative "年前"
+    if (abs >= 1e8) return `约${(abs / 1e8).toFixed(1)}亿年${dir}`
+    if (abs >= 1e4) return `约${Math.round(abs / 1e4)}万年${dir}`
+    return `约${Math.round(abs)}年${dir}`
   }
   const c = tp.civil
   // Degraded-data guard: a fine precision should always carry `civil`, but a

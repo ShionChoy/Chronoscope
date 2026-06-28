@@ -19,6 +19,19 @@ describe('formatTimePoint', () => {
     expect(formatTimePoint(fromYear(NOW - 3.8e9, 'Ga'), NOW)).toBe('约38.0亿年前')
     expect(formatTimePoint(fromYear(NOW - 66e6, 'Ma'), NOW)).toBe('约6600万年前')
   })
+  it('reads a coarse tick at/near now as 现在, not a tiny "X年前"', () => {
+    // At Ga scale a tick lands on year 0; its distance (~2026y) is negligible
+    // against the billion-year unit, so it should read 现在 rather than 约2026年前.
+    expect(formatTimePoint(fromYear(0, 'Ga'), NOW)).toBe('现在')
+    expect(formatTimePoint(fromYear(NOW, 'Ga'), NOW)).toBe('现在')
+    expect(formatTimePoint(fromYear(NOW, 'Ma'), NOW)).toBe('现在')
+  })
+  it('formats a future coarse point as X年后, never a negative 年前', () => {
+    // Panning the detail axis past now: a tick a billion years ahead must read
+    // 约10.0亿年后, not 约-999997974年前.
+    expect(formatTimePoint(fromYear(NOW + 1e9, 'Ga'), NOW)).toBe('约10.0亿年后')
+    expect(formatTimePoint(fromYear(NOW + 66e6, 'Ma'), NOW)).toBe('约6600万年后')
+  })
   it('does not throw on a fine-precision TimePoint missing civil (degraded data); falls back to the year', () => {
     // A fine precision normally carries `civil`; a malformed point (e.g. from
     // fromYear(2026, 'day')) lacks it. The formatter must stay total, not crash.
