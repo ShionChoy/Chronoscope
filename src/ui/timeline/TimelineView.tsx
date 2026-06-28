@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAppStore, useAppState, visibleEvents } from '../../state'
-import type { LinearView } from '../../domain/time'
-import { initialView, zoomView, panView, clampView, viewFromLens } from './view'
+import { instantOf, type LinearView } from '../../domain/time'
+import { initialView, zoomView, panView, clampView, viewFromLensCenter, panViewByLensDrag } from './view'
 import { spanOf, pinchScale, midpoint } from './gesture'
-import { buildScene, eventInstant, type TimelineScene } from './scene'
+import { buildScene, type TimelineScene } from './scene'
 import { drawScene, computeLayout, type TimelineColors } from './renderer'
 import type { Id } from '../../domain/model'
 import { buildEventCard } from './card'
@@ -34,14 +34,28 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
   const events = useMemo(() => visibleEvents(state), [state])
   const nowYear = state.nowYear
 
+  // Navigable range = padded extent of every event's start AND end instants.
+  // The view is clamped to this, so the rightmost reachable edge is the latest
+  // event (and the leftmost the earliest), with no empty space beyond the data.
+  const bounds = useMemo<LinearView>(() => {
+    const instants: number[] = []
+    for (const e of events) {
+      if (e.start) instants.push(instantOf(e.start))
+      if (e.end) instants.push(instantOf(e.end))
+    }
+    return initialView(instants, nowYear)
+  }, [events, nowYear])
+
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
   const sceneRef = useRef<TimelineScene | null>(null)
   const layoutRef = useRef(computeLayout(0))
   const [size, setSize] = useState({ w: 0, h: 0 })
-  const [view, setView] = useState<LinearView>(() =>
-    initialView(events.map(eventInstant).filter((n): n is number => n !== null), nowYear),
-  )
+  const [view, setView] = useState<LinearView>(bounds)
+  // The overview band's shown extent. Linear (so the lens keeps a constant width
+  // while panning) and independently zoomable/pannable within `bounds`, letting
+  // you spread out a crowded era without touching the detail view.
+  const [overview, setOverview] = useState<LinearView>(bounds)
 
   // track element size
   useEffect(() => {
@@ -62,7 +76,7 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
     const dpr = window.devicePixelRatio || 1
     canvas.width = size.w * dpr
     canvas.height = size.h * dpr
-    const scene = buildScene({ events, view, nowYear, width: size.w, selectedId: state.selectedId })
+    const scene = buildScene({ events, view, overview, nowYear, width: size.w, selectedId: state.selectedId })
     const layout = computeLayout(size.h)
     sceneRef.current = scene
     layoutRef.current = layout
@@ -70,10 +84,10 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
     if (!ctx) return // jsdom / unsupported: scene is still computed, just not painted
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     drawScene(ctx, scene, readColors(canvas), layout)
-  }, [events, view, nowYear, size, state.selectedId, state.theme])
+  }, [events, view, overview, nowYear, size, state.selectedId, state.theme])
 
   // pointer interactions
-  const drag = useRef<{ x: number; mode: 'pan' | 'lens'; moved: boolean } | null>(null)
+  const drag = useRef<{ x: number; mode: 'pan' | 'lens' | 'overviewPan'; moved: boolean } | null>(null)
   // active pointers by id → clientX, for multi-touch pinch
   const pointers = useRef(new Map<number, number>())
 
@@ -85,8 +99,35 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
 
   const onWheel = (e: React.WheelEvent) => {
     e.preventDefault()
+    const rect = canvasRef.current?.getBoundingClientRect()
+    const localY = rect ? e.clientY - rect.top : 0
+    const width = rect?.width || 1
+    const frac = fractionAt(e.clientX)
+    // Shift+wheel or a horizontal scroll pans; a plain wheel zooms at the cursor.
+    const horizontal = e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)
+    const amount = e.deltaX !== 0 ? e.deltaX : e.deltaY
     const factor = e.deltaY < 0 ? 0.85 : 1.18
-    setView((v) => clampView(zoomView(v, fractionAt(e.clientX), factor), nowYear))
+    if (localY >= layoutRef.current.overviewTop) {
+      // wheel over the overview navigates the OVERVIEW band itself (its extent),
+      // not the detail view — this is how you spread out / focus an era.
+      if (horizontal) setOverview((o) => clampView(panView(o, amount / width), bounds.min, bounds.max))
+      else setOverview((o) => clampView(zoomView(o, frac, factor), bounds.min, bounds.max))
+      return
+    }
+    if (horizontal) {
+      setView((v) => clampView(panView(v, amount / width), bounds.min, bounds.max))
+      return
+    }
+    setView((v) => clampView(zoomView(v, frac, factor), bounds.min, bounds.max))
+  }
+
+  const onDoubleClick = (e: React.MouseEvent) => {
+    // zoom-to-fit / reset: the overview band resets its own extent; the detail
+    // area resets the detail view. Both go back to the full data range.
+    const rect = canvasRef.current?.getBoundingClientRect()
+    const localY = rect ? e.clientY - rect.top : 0
+    if (localY >= layoutRef.current.overviewTop) setOverview(bounds)
+    else setView(bounds)
   }
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -98,8 +139,15 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
     }
     const rect = canvasRef.current?.getBoundingClientRect()
     const localY = rect ? e.clientY - rect.top : 0
-    const inOverview = localY >= layoutRef.current.overviewTop
-    drag.current = { x: e.clientX, mode: inOverview ? 'lens' : 'pan', moved: false }
+    const localX = rect ? e.clientX - rect.left : 0
+    let mode: 'pan' | 'lens' | 'overviewPan' = 'pan'
+    if (localY >= layoutRef.current.overviewTop) {
+      // inside the overview: grabbing the lens pans the view; grabbing empty
+      // overview space pans the overview band's own extent.
+      const lens = sceneRef.current?.overview.lens
+      mode = lens && localX >= lens.x0 - 6 && localX <= lens.x1 + 6 ? 'lens' : 'overviewPan'
+    }
+    drag.current = { x: e.clientX, mode, moved: false }
     ;(e.target as Element).setPointerCapture?.(e.pointerId)
   }
 
@@ -114,7 +162,7 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
         const width = rect?.width || 1
         const frac = Math.min(Math.max((midpoint(next) - (rect?.left ?? 0)) / width, 0), 1)
         // fingers apart (scale > 1) → zoom in → factor < 1
-        setView((v) => clampView(zoomView(v, frac, 1 / scale), nowYear))
+        setView((v) => clampView(zoomView(v, frac, 1 / scale), bounds.min, bounds.max))
       }
       return
     }
@@ -126,16 +174,13 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
     if (Math.abs(e.clientX - d.x) > 3) d.moved = true
     d.x = e.clientX
     if (d.mode === 'pan') {
-      setView((v) => clampView(panView(v, -dxFrac), nowYear))
+      setView((v) => clampView(panView(v, -dxFrac), bounds.min, bounds.max))
+    } else if (d.mode === 'overviewPan') {
+      setOverview((o) => clampView(panView(o, -dxFrac), bounds.min, bounds.max))
     } else {
-      // shift the lens by dxFrac, i.e. move the detail window in log space
-      const lens = sceneRef.current?.overview.lens
-      const w = sceneRef.current?.width || 1
-      if (lens) {
-        const f0 = Math.min(Math.max(lens.x0 / w + dxFrac, 0), 1)
-        const f1 = Math.min(Math.max(lens.x1 / w + dxFrac, 0), 1)
-        setView(() => clampView(viewFromLens({ f0, f1 }, nowYear), nowYear))
-      }
+      // dragging the overview lens PANS the detail window (keeps zoom). On the
+      // linear overview this is a pure translation, so the lens width is fixed.
+      setView((v) => clampView(panViewByLensDrag(v, dxFrac, overview), bounds.min, bounds.max))
     }
   }
 
@@ -151,7 +196,13 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
     const y = e.clientY - rect.top
     const layout = layoutRef.current
     const scene = sceneRef.current
-    if (!scene || y >= layout.overviewTop) return
+    if (!scene) return
+    if (y >= layout.overviewTop) {
+      // click on the overview → jump: centre the detail window there (keeps zoom)
+      const centerFrac = Math.min(Math.max(x / (rect.width || 1), 0), 1)
+      setView((v) => clampView(viewFromLensCenter(v, centerFrac, overview), bounds.min, bounds.max))
+      return
+    }
     for (const g of scene.detail.glyphs) {
       const gy = layout.glyphTop + g.row * layout.rowHeight
       const within = x >= g.xStart - 6 && x <= Math.max(g.xEnd, g.xStart) + 6 && y >= gy - 4 && y <= gy + 12
@@ -177,6 +228,7 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
         ref={canvasRef}
         style={{ width: '100%', height: '100%', display: 'block', touchAction: 'none' }}
         onWheel={onWheel}
+        onDoubleClick={onDoubleClick}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

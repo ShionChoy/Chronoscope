@@ -1,4 +1,4 @@
-import { type LinearView, projectLog, unprojectLog, LOG_AGO_MAX } from '../../domain/time'
+import { type LinearView, projectLinear, unprojectLinear } from '../../domain/time'
 
 export interface Lens {
   f0: number
@@ -34,27 +34,54 @@ export function panView(view: LinearView, deltaFraction: number): LinearView {
   return { min: view.min + shift, max: view.max + shift }
 }
 
-export function clampView(view: LinearView, nowYear: number): LinearView {
-  const minYear = nowYear - LOG_AGO_MAX
-  const min = Math.max(view.min, minYear)
-  let max = view.max
-  if (max - min < MIN_RANGE_YEARS) {
-    max = min + MIN_RANGE_YEARS
+// Keep the view inside the navigable range [lo, hi] by TRANSLATING it (never
+// by truncating one edge), so panning into a boundary slides the window rather
+// than silently rescaling it (changing zoom). The window also can't be wider
+// than the whole range.
+export function clampView(view: LinearView, lo: number, hi: number): LinearView {
+  let width = Math.max(view.max - view.min, MIN_RANGE_YEARS)
+  const span = hi - lo
+  if (width > span) width = span
+  let min = view.min
+  let max = min + width
+  if (min < lo) {
+    min = lo
+    max = lo + width
+  } else if (max > hi) {
+    max = hi
+    min = hi - width
   }
   return { min, max }
 }
 
-export function lensFromView(view: LinearView, nowYear: number): Lens {
-  const a = projectLog(view.min, nowYear)
-  const b = projectLog(view.max, nowYear)
+// The overview is a LINEAR axis over `overview` (its currently shown extent,
+// itself zoomable/pannable within the data bounds). Because the mapping is
+// linear, the lens — the detail view projected onto it — keeps a CONSTANT width
+// while the view pans; the width only changes when you zoom the view.
+export function lensFromView(view: LinearView, overview: LinearView): Lens {
+  const a = projectLinear(view.min, overview)
+  const b = projectLinear(view.max, overview)
   return { f0: Math.min(a, b), f1: Math.max(a, b) }
 }
 
-// NOTE: the log overview only represents the past (ago clamped to [1, 14e9]),
-// so a lens at f1=1 maps back to nowYear-1. Dragging the lens on a view that
-// extends to/past "now" therefore snaps max to ~nowYear-1; pan/zoom are
-// unaffected (the view is the source of truth there). Acceptable for a
-// deep-time overview; revisit if precise near-now lens dragging is needed.
-export function viewFromLens(lens: Lens, nowYear: number): LinearView {
-  return { min: unprojectLog(lens.f0, nowYear), max: unprojectLog(lens.f1, nowYear) }
+export function viewFromLens(lens: Lens, overview: LinearView): LinearView {
+  return { min: unprojectLinear(lens.f0, overview), max: unprojectLinear(lens.f1, overview) }
+}
+
+// Jump the detail window so its centre sits at the year under `centerFraction`
+// of the (linear) overview, keeping the current range (zoom) fixed. Used by a
+// click on the overview — an absolute "go there".
+export function viewFromLensCenter(view: LinearView, centerFraction: number, overview: LinearView): LinearView {
+  const center = unprojectLinear(centerFraction, overview)
+  const half = (view.max - view.min) / 2
+  return { min: center - half, max: center + half }
+}
+
+// Pan the detail window by a drag delta measured in overview fractions. On the
+// linear overview this is a pure translation (delta·overviewSpan years), so the
+// range (zoom) is preserved exactly, delta 0 is a no-op (no jump), and the lens
+// keeps its width while it tracks the cursor. Used while dragging the lens.
+export function panViewByLensDrag(view: LinearView, deltaFraction: number, overview: LinearView): LinearView {
+  const shift = deltaFraction * (overview.max - overview.min)
+  return { min: view.min + shift, max: view.max + shift }
 }

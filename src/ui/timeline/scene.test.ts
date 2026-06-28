@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { buildScene, eventInstant, aggregateMarkers } from './scene'
 import { ev, y } from '../../test/fixtures'
 
-const base = { view: { min: 2000, max: 2100 }, nowYear: 2026, width: 1000, selectedId: null }
+const base = { view: { min: 2000, max: 2100 }, overview: { min: 2000, max: 2100 }, nowYear: 2026, width: 1000, selectedId: null }
 
 describe('eventInstant', () => {
   it('prefers start, falls back to end, else null', () => {

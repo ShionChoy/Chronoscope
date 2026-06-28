@@ -2,7 +2,6 @@ import type { EventRecord, Id } from '../../domain/model'
 import {
   type LinearView,
   projectLinear,
-  projectLog,
   generateTicks,
   spanOf,
   instantOf,
@@ -44,6 +43,10 @@ export interface TimelineScene {
 export interface BuildSceneInput {
   events: EventRecord[]
   view: LinearView
+  // The overview band's currently shown extent (linear). The lens and the event
+  // markers are projected onto this, so the user can zoom/pan it to spread out a
+  // crowded era without changing the detail view.
+  overview: LinearView
   nowYear: number
   width: number
   selectedId: Id | null
@@ -76,7 +79,7 @@ export function eventInstant(e: EventRecord): number | null {
 }
 
 export function buildScene(input: BuildSceneInput): TimelineScene {
-  const { events, view, nowYear, width, selectedId } = input
+  const { events, view, overview, nowYear, width, selectedId } = input
   const xOf = (year: number) => projectLinear(year, view) * width
 
   const ticks: SceneTick[] = generateTicks(view)
@@ -142,14 +145,18 @@ export function buildScene(input: BuildSceneInput): TimelineScene {
   for (const e of events) {
     const inst = eventInstant(e)
     if (inst === null) continue
-    rawMarkers.push({ x: projectLog(inst, nowYear) * width, eventId: e.id })
+    const f = projectLinear(inst, overview)
+    if (f < 0 || f > 1) continue // event lies outside the overview's current extent
+    rawMarkers.push({ x: f * width, eventId: e.id })
   }
   const markers = aggregateMarkers(rawMarkers, MARKER_BUCKET_PX)
 
-  const lens = lensFromView(view, nowYear)
+  const lens = lensFromView(view, overview)
+  const x0 = Math.min(Math.max(lens.f0, 0), 1) * width
+  const x1 = Math.min(Math.max(lens.f1, 0), 1) * width
   return {
     width,
     detail: { ticks, glyphs, rowCount },
-    overview: { markers, lens: { x0: lens.f0 * width, x1: lens.f1 * width } },
+    overview: { markers, lens: { x0, x1 } },
   }
 }
