@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { descendantCategoryIds, buildCategoryTree, visibleEvents } from './selectors'
+import { descendantCategoryIds, buildCategoryTree, categoryEventCounts, visibleEvents } from './selectors'
 import { initialAppState, type AppState } from './types'
 import { ev, cat, y } from '../test/fixtures'
 
@@ -18,6 +18,21 @@ describe('descendantCategoryIds', () => {
       cat({ id: 'x' }),
     ]
     expect([...descendantCategoryIds(cats, 'a')].sort()).toEqual(['a', 'b', 'c'])
+  })
+})
+
+describe('categoryEventCounts', () => {
+  it('counts live events per category, including descendants', () => {
+    const cats = [cat({ id: 'p' }), cat({ id: 'c', parentId: 'p' })]
+    const events = [
+      ev({ id: 'a', categoryId: 'p', start: y(1) }),
+      ev({ id: 'b', categoryId: 'c', start: y(2) }),
+      ev({ id: 'd', categoryId: 'c', start: y(3), deleted: true }), // tombstone ignored
+      ev({ id: 'e', categoryId: null, start: y(4) }), // uncategorized ignored
+    ]
+    const counts = categoryEventCounts(st({ categories: cats, events }))
+    expect(counts.get('p')).toBe(2) // a (direct) + b (in subcategory)
+    expect(counts.get('c')).toBe(1)
   })
 })
 
@@ -46,6 +61,14 @@ describe('visibleEvents', () => {
       filter: { categoryId: 'p', tagIds: [], tagMode: 'or', query: '' },
     })
     expect(visibleEvents(s).map((e) => e.id)).toEqual(['a'])
+  })
+  it('uncategorized filter shows only events without a category', () => {
+    const s = st({
+      categories: [cat({ id: 'c' })],
+      events: [ev({ id: 'a', categoryId: 'c', start: y(1) }), ev({ id: 'b', categoryId: null, start: y(2) })],
+      filter: { categoryId: null, uncategorized: true, tagIds: [], tagMode: 'or', query: '' },
+    })
+    expect(visibleEvents(s).map((e) => e.id)).toEqual(['b'])
   })
   it('filters tags with AND vs OR', () => {
     const events = [

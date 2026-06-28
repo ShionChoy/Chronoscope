@@ -87,6 +87,24 @@ describe('appStore', () => {
     expect(app.store.getState().tags.map((x) => x.id)).toEqual([id])
   })
 
+  it('deleteCategory cascades to descendant categories and their events', async () => {
+    const parent = await app.createCategory({ name: '历史' })
+    const child = await app.createCategory({ name: '近代', parentId: parent })
+    const e1 = await app.createEvent({ title: 'a', categoryId: parent })
+    const e2 = await app.createEvent({ title: 'b', categoryId: child })
+    const other = await app.createEvent({ title: 'c' }) // uncategorized → survives
+    app.select(e2)
+    await app.deleteCategory(parent)
+    const s = app.store.getState()
+    expect(s.categories.find((c) => c.id === parent)?.deleted).toBe(true)
+    expect(s.categories.find((c) => c.id === child)?.deleted).toBe(true)
+    expect(s.events.find((e) => e.id === e1)?.deleted).toBe(true)
+    expect(s.events.find((e) => e.id === e2)?.deleted).toBe(true)
+    expect(s.events.find((e) => e.id === other)?.deleted).toBe(false)
+    expect(s.selectedId).toBeNull() // selection on a cascaded event is cleared
+    expect((await db.events.get(e2))?.deleted).toBe(true) // persisted, not just in-memory
+  })
+
   it('setters update only their slice and notify', async () => {
     const seen: number[] = []
     app.store.subscribe(() => seen.push(1))

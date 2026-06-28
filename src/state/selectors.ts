@@ -38,8 +38,38 @@ export function buildCategoryTree(categories: Category[]): CategoryNode[] {
   return build(null)
 }
 
+// Descendant-inclusive count of live events per category: each category's tally
+// includes events filed directly under it and under any of its subcategories.
+export function categoryEventCounts(state: AppState): Map<Id, number> {
+  const direct = new Map<Id, number>()
+  for (const e of state.events) {
+    if (e.deleted || e.categoryId == null) continue
+    direct.set(e.categoryId, (direct.get(e.categoryId) ?? 0) + 1)
+  }
+  const live = state.categories.filter((c) => !c.deleted)
+  const childrenOf = new Map<Id | null, Id[]>()
+  for (const c of live) {
+    const arr = childrenOf.get(c.parentId) ?? []
+    arr.push(c.id)
+    childrenOf.set(c.parentId, arr)
+  }
+  const totals = new Map<Id, number>()
+  const total = (id: Id): number => {
+    const cached = totals.get(id)
+    if (cached !== undefined) return cached
+    let sum = direct.get(id) ?? 0
+    for (const child of childrenOf.get(id) ?? []) sum += total(child)
+    totals.set(id, sum)
+    return sum
+  }
+  for (const c of live) total(c.id)
+  return totals
+}
+
 function matchesFilter(e: EventRecord, filter: Filter, categories: Category[]): boolean {
-  if (filter.categoryId) {
+  if (filter.uncategorized) {
+    if (e.categoryId != null) return false
+  } else if (filter.categoryId) {
     const ids = descendantCategoryIds(categories, filter.categoryId)
     if (!e.categoryId || !ids.has(e.categoryId)) return false
   }

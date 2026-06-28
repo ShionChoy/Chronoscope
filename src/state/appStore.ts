@@ -11,6 +11,7 @@ import {
 } from '../data'
 import type { EventRecord, Category, Tag, Id } from '../domain/model'
 import { createStore, type Store } from './store'
+import { descendantCategoryIds } from './selectors'
 import { initialAppState, type AppState, type Filter, type Sort, type Theme, type View } from './types'
 
 export interface AppStoreDeps {
@@ -119,12 +120,36 @@ export function createAppStore(deps: AppStoreDeps): AppStore {
       store.setState((s) => ({ ...s, categories: upsert(s.categories, next) }))
     },
 
+    // Deleting a category cascades: the category, its descendant categories, and
+    // every event filed under any of them are all tombstoned together.
     async deleteCategory(id) {
-      const current = store.getState().categories.find((c) => c.id === id)
-      if (!current) throw new Error(`deleteCategory: no category ${id}`)
-      const next = softDelete(current, clock)
-      await db.categories.put(next)
-      store.setState((s) => ({ ...s, categories: upsert(s.categories, next) }))
+      const s = store.getState()
+      if (!s.categories.find((c) => c.id === id)) throw new Error(`deleteCategory: no category ${id}`)
+      const ids = descendantCategoryIds(s.categories, id) // the category + its descendants
+      const cats: Category[] = []
+      for (const c of s.categories) {
+        if (!c.deleted && ids.has(c.id)) {
+          const next = softDelete(c, clock)
+          await db.categories.put(next)
+          cats.push(next)
+        }
+      }
+      const events: EventRecord[] = []
+      for (const e of s.events) {
+        if (!e.deleted && e.categoryId != null && ids.has(e.categoryId)) {
+          const next = softDelete(e, clock)
+          await db.events.put(next)
+          events.push(next)
+        }
+      }
+      store.setState((st) => {
+        let categories = st.categories
+        for (const c of cats) categories = upsert(categories, c)
+        let evs = st.events
+        for (const e of events) evs = upsert(evs, e)
+        const selectedDeleted = events.some((e) => e.id === st.selectedId)
+        return { ...st, categories, events: evs, selectedId: selectedDeleted ? null : st.selectedId }
+      })
     },
 
     async createTag(fields) {
