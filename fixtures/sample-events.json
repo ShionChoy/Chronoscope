@@ -1,0 +1,411 @@
+{
+  "version": 1,
+  "exportedAt": "2026-06-28T00:00:00.000Z",
+  "events": [
+    {
+      "id": "e-bigbang",
+      "title": "宇宙大爆炸",
+      "start": {
+        "year": -13799997974,
+        "precision": "Ga"
+      },
+      "note": "# 宇宙的开端\n\n时间、空间与物质的**起点**,约 138 亿年前。",
+      "categoryId": "c-cosmos",
+      "tagIds": [
+        "t-milestone"
+      ],
+      "links": [],
+      "createdAt": "001780000000008-000000-seed",
+      "updatedAt": "001780000000009-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-earth",
+      "title": "地球形成",
+      "start": {
+        "year": -4539997974,
+        "precision": "Ga"
+      },
+      "note": "由太阳星云吸积而成,约 *45.4 亿年* 前。",
+      "categoryId": "c-geo",
+      "tagIds": [
+        "t-milestone"
+      ],
+      "links": [],
+      "createdAt": "001780000000010-000000-seed",
+      "updatedAt": "001780000000011-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-cambrian",
+      "title": "寒武纪大爆发",
+      "start": {
+        "year": -537997974,
+        "precision": "Ma"
+      },
+      "note": "多细胞动物门类在地质瞬间集中出现。",
+      "categoryId": "c-geo",
+      "tagIds": [],
+      "links": [],
+      "createdAt": "001780000000012-000000-seed",
+      "updatedAt": "001780000000013-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-kpg",
+      "title": "白垩纪–古近纪灭绝事件",
+      "start": {
+        "year": -65997974,
+        "precision": "Ma"
+      },
+      "note": "一颗小行星撞击地球,非鸟类恐龙灭绝。",
+      "categoryId": "c-geo",
+      "tagIds": [
+        "t-disaster"
+      ],
+      "links": [],
+      "createdAt": "001780000000014-000000-seed",
+      "updatedAt": "001780000000015-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-lgm",
+      "title": "末次冰盛期",
+      "start": {
+        "year": -17974,
+        "precision": "ka"
+      },
+      "note": "冰川覆盖达到最大范围,约 2 万年前。",
+      "categoryId": "c-cosmos",
+      "tagIds": [],
+      "links": [],
+      "createdAt": "001780000000016-000000-seed",
+      "updatedAt": "001780000000017-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-mesopotamia",
+      "title": "美索不达米亚早期文明",
+      "start": {
+        "year": -2999,
+        "precision": "millennium"
+      },
+      "note": "苏美尔城邦兴起(千年纪精度)。",
+      "categoryId": "c-history",
+      "tagIds": [],
+      "links": [],
+      "createdAt": "001780000000018-000000-seed",
+      "updatedAt": "001780000000019-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-pyramid",
+      "title": "吉萨大金字塔",
+      "start": {
+        "year": -2559,
+        "precision": "year"
+      },
+      "note": "古埃及第四王朝,公元前 2560 年左右。",
+      "categoryId": "c-history",
+      "tagIds": [
+        "t-milestone"
+      ],
+      "links": [],
+      "createdAt": "001780000000020-000000-seed",
+      "updatedAt": "001780000000021-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-greek",
+      "title": "古希腊古典时代",
+      "start": {
+        "year": -450,
+        "precision": "century"
+      },
+      "note": "公元前 5 世纪,城邦文明的高峰(世纪精度)。",
+      "categoryId": "c-history",
+      "tagIds": [],
+      "links": [],
+      "createdAt": "001780000000022-000000-seed",
+      "updatedAt": "001780000000023-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-rome-founded",
+      "title": "罗马建城",
+      "start": {
+        "year": -752,
+        "precision": "year"
+      },
+      "note": "传说中由罗慕路斯建立,公元前 753 年。",
+      "categoryId": "c-history",
+      "tagIds": [],
+      "links": [],
+      "createdAt": "001780000000024-000000-seed",
+      "updatedAt": "001780000000025-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-rome-peak",
+      "title": "罗马帝国五贤帝时期",
+      "start": {
+        "year": 150,
+        "precision": "century"
+      },
+      "note": "公元 2 世纪的鼎盛(公元世纪精度)。",
+      "categoryId": "c-history",
+      "tagIds": [],
+      "links": [],
+      "createdAt": "001780000000026-000000-seed",
+      "updatedAt": "001780000000027-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-renaissance",
+      "title": "文艺复兴",
+      "start": {
+        "year": 1350,
+        "precision": "century"
+      },
+      "end": {
+        "year": 1650,
+        "precision": "century"
+      },
+      "note": "从 *14 世纪* 到 *17 世纪* 的文化运动(跨世纪区间)。",
+      "categoryId": "c-history",
+      "tagIds": [
+        "t-milestone"
+      ],
+      "links": [],
+      "createdAt": "001780000000028-000000-seed",
+      "updatedAt": "001780000000029-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-wwii",
+      "title": "第二次世界大战",
+      "start": {
+        "year": 1939,
+        "precision": "year"
+      },
+      "end": {
+        "year": 1945,
+        "precision": "year"
+      },
+      "note": "1939–1945,年精度区间事件。",
+      "categoryId": "c-modern",
+      "tagIds": [
+        "t-disaster"
+      ],
+      "links": [],
+      "createdAt": "001780000000030-000000-seed",
+      "updatedAt": "001780000000031-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-apollo",
+      "title": "阿波罗计划",
+      "start": {
+        "year": 1960,
+        "precision": "decade"
+      },
+      "note": "NASA 的载人登月工程(年代精度)。",
+      "categoryId": "c-modern",
+      "tagIds": [
+        "t-tech"
+      ],
+      "links": [],
+      "createdAt": "001780000000032-000000-seed",
+      "updatedAt": "001780000000033-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-moon",
+      "title": "阿波罗 11 号登月",
+      "start": {
+        "year": 1969,
+        "precision": "year"
+      },
+      "note": "人类首次登月。\n\n> That’s one small step for man...",
+      "categoryId": "c-modern",
+      "tagIds": [
+        "t-milestone",
+        "t-tech"
+      ],
+      "links": [
+        "e-apollo"
+      ],
+      "createdAt": "001780000000034-000000-seed",
+      "updatedAt": "001780000000035-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-iphone",
+      "title": "iPhone 发布",
+      "start": {
+        "year": 2007.021917808219,
+        "precision": "day",
+        "civil": {
+          "y": 2007,
+          "mo": 1,
+          "d": 9
+        }
+      },
+      "note": "智能手机时代的开端(日精度)。",
+      "categoryId": "c-modern",
+      "tagIds": [
+        "t-tech"
+      ],
+      "links": [],
+      "createdAt": "001780000000036-000000-seed",
+      "updatedAt": "001780000000037-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-gfc",
+      "title": "2008 年全球金融危机",
+      "start": {
+        "year": 2008.6666666666667,
+        "precision": "month",
+        "civil": {
+          "y": 2008,
+          "mo": 9
+        }
+      },
+      "note": "雷曼兄弟破产引爆(月精度)。",
+      "categoryId": "c-modern",
+      "tagIds": [
+        "t-disaster"
+      ],
+      "links": [],
+      "createdAt": "001780000000038-000000-seed",
+      "updatedAt": "001780000000039-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-meeting",
+      "title": "项目评审会",
+      "start": {
+        "year": 2026.4702625570776,
+        "precision": "minute",
+        "civil": {
+          "y": 2026,
+          "mo": 6,
+          "d": 21,
+          "h": 15,
+          "mi": 30
+        }
+      },
+      "end": {
+        "year": 2026.4703767123287,
+        "precision": "minute",
+        "civil": {
+          "y": 2026,
+          "mo": 6,
+          "d": 21,
+          "h": 16,
+          "mi": 30
+        }
+      },
+      "note": "- 进度同步\n- 风险评审\n- 下一步计划",
+      "categoryId": "c-personal",
+      "tagIds": [],
+      "links": [],
+      "createdAt": "001780000000040-000000-seed",
+      "updatedAt": "001780000000041-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "e-deadline",
+      "title": "项目最终截止",
+      "end": {
+        "year": 2026.9972602739726,
+        "precision": "day",
+        "civil": {
+          "y": 2026,
+          "mo": 12,
+          "d": 31
+        }
+      },
+      "note": "**仅有终点**的开放式截止事件。",
+      "categoryId": "c-personal",
+      "tagIds": [
+        "t-milestone"
+      ],
+      "links": [],
+      "createdAt": "001780000000042-000000-seed",
+      "updatedAt": "001780000000043-000000-seed",
+      "deleted": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "c-cosmos",
+      "name": "宇宙与地质",
+      "parentId": null,
+      "color": "#b4541f",
+      "order": 0,
+      "updatedAt": "001780000000000-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "c-geo",
+      "name": "地质",
+      "parentId": "c-cosmos",
+      "color": "#cf7a3d",
+      "order": 0,
+      "updatedAt": "001780000000001-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "c-history",
+      "name": "人类历史",
+      "parentId": null,
+      "color": "#0d7d8c",
+      "order": 1,
+      "updatedAt": "001780000000002-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "c-modern",
+      "name": "现代",
+      "parentId": "c-history",
+      "color": "#1597a6",
+      "order": 0,
+      "updatedAt": "001780000000003-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "c-personal",
+      "name": "个人",
+      "parentId": null,
+      "color": "#6a5acd",
+      "order": 2,
+      "updatedAt": "001780000000004-000000-seed",
+      "deleted": false
+    }
+  ],
+  "tags": [
+    {
+      "id": "t-milestone",
+      "name": "里程碑",
+      "color": "#c0392b",
+      "updatedAt": "001780000000005-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "t-tech",
+      "name": "科技",
+      "color": "#0d7d8c",
+      "updatedAt": "001780000000006-000000-seed",
+      "deleted": false
+    },
+    {
+      "id": "t-disaster",
+      "name": "灾难",
+      "color": "#8e44ad",
+      "updatedAt": "001780000000007-000000-seed",
+      "deleted": false
+    }
+  ]
+}
