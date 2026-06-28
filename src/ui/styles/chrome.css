@@ -135,8 +135,8 @@ legend {
 .time-input { display: flex; flex-direction: column; gap: 8px; }
 .time-input > label { display: flex; flex-direction: column; gap: 4px; }
 .time-input .preview { color: var(--muted); font-size: 13px; }
-.time-input .structured { display: flex; gap: 12px; }
-.time-input .structured label { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.time-input .structured { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: end; }
+.time-input .structured label { flex: 1 1 auto; min-width: 64px; display: flex; flex-direction: column; gap: 4px; }
 
 .errors {
   margin: 0;

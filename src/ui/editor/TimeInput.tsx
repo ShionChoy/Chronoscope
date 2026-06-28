@@ -1,12 +1,13 @@
 import { useState } from 'react'
+import { formatTimePoint, daysInMonth, type TimePoint } from '../../domain/time'
 import {
-  parseTimeInput,
-  formatTimePoint,
-  fromYear,
-  PRECISION_ORDER,
-  type TimePoint,
-  type Precision,
-} from '../../domain/time'
+  buildTimePoint,
+  fieldsFromTimePoint,
+  isRelativeUnit,
+  SCALE_UNITS,
+  type TimeFields,
+  type ScaleUnit,
+} from './timeFields'
 
 export interface TimeInputProps {
   label: string
@@ -15,73 +16,158 @@ export interface TimeInputProps {
   onChange: (tp: TimePoint | null) => void
 }
 
-// The structured "precision + year" control can only express a bare year, so
-// it offers year-and-coarser precisions. Fine precisions (day/month/hour/…)
-// require civil sub-fields and are entered via the free-text field instead;
-// emitting one here via fromYear would build a malformed (civil-less) TimePoint.
-const COARSE_PRECISIONS: Precision[] = PRECISION_ORDER.slice(PRECISION_ORDER.indexOf('year'))
+const UNIT_LABELS: Record<ScaleUnit, string> = {
+  decade: '年代',
+  century: '世纪',
+  millennium: '千年纪',
+  ka: '千年(ka)',
+  Ma: '百万年(Ma)',
+  Ga: '十亿年(Ga)',
+}
+
+function range(from: number, to: number): number[] {
+  const out: number[] = []
+  for (let i = from; i <= to; i++) out.push(i)
+  return out
+}
 
 export function TimeInput({ label, value, nowYear, onChange }: TimeInputProps) {
-  const [text, setText] = useState('')
-  const [precision, setPrecision] = useState<Precision>(
-    value && COARSE_PRECISIONS.includes(value.precision) ? value.precision : 'year',
+  const [fields, setFields] = useState<TimeFields>(() => fieldsFromTimePoint(value, nowYear))
+
+  const update = (patch: Partial<TimeFields>) => {
+    const next = { ...fields, ...patch }
+    // keep the day in range when the month or year changes
+    if ((patch.mo !== undefined || patch.year !== undefined || patch.era !== undefined) && next.d !== '') {
+      const y = next.era === 'BCE' ? 1 - Number(next.year) : Number(next.year)
+      const mo = Number(next.mo)
+      if (next.mo === '' || (Number(next.d) > daysInMonth(y, mo))) next.d = ''
+    }
+    setFields(next)
+    onChange(buildTimePoint(next, nowYear))
+  }
+
+  const preview = (() => {
+    const tp = buildTimePoint(fields, nowYear)
+    return tp ? formatTimePoint(tp, nowYear) : ''
+  })()
+
+  const yearNum = fields.era === 'BCE' ? 1 - Number(fields.year || 0) : Number(fields.year || 0)
+  const maxDay = fields.mo ? daysInMonth(yearNum, Number(fields.mo)) : 31
+  const relative = fields.mode === 'scale' && isRelativeUnit(fields.unit)
+
+  const blank = (text: string) => (
+    <option value="">{text}</option>
   )
-  const [year, setYear] = useState<string>(value ? String(value.year) : '')
-
-  const parsed = text.trim() ? parseTimeInput(text, nowYear) : null
-  const freeTextPreview = text.trim() ? (parsed ? formatTimePoint(parsed, nowYear) : '无法识别') : ''
-
-  const onText = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const next = e.target.value
-    setText(next)
-    if (!next.trim()) return onChange(null)
-    onChange(parseTimeInput(next, nowYear))
-  }
-
-  const emitStructured = (p: Precision, yStr: string) => {
-    if (yStr.trim() === '' || Number.isNaN(Number(yStr))) return onChange(null)
-    onChange(fromYear(Number(yStr), p))
-  }
 
   return (
     <fieldset className="time-input">
       <legend>{label}</legend>
-      <label>
-        {label}
-        <input value={text} onChange={onText} placeholder="如 公元前3000年 / 2026-06-21 / 约38亿年前" />
-      </label>
-      {freeTextPreview && <span className="mono preview">{freeTextPreview}</span>}
 
       <div className="structured">
         <label>
-          {`${label} 精度`}
-          <select
-            value={precision}
-            onChange={(e) => {
-              const p = e.target.value as Precision
-              setPrecision(p)
-              emitStructured(p, year)
-            }}
-          >
-            {COARSE_PRECISIONS.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
+          {`${label} 尺度`}
+          <select value={fields.mode} onChange={(e) => update({ mode: e.target.value as TimeFields['mode'] })}>
+            <option value="civil">历法日期</option>
+            <option value="scale">大尺度</option>
           </select>
         </label>
-        <label>
-          {`${label} 年份`}
-          <input
-            type="number"
-            value={year}
-            onChange={(e) => {
-              setYear(e.target.value)
-              emitStructured(precision, e.target.value)
-            }}
-          />
-        </label>
+
+        {fields.mode === 'scale' && (
+          <label>
+            {`${label} 单位`}
+            <select value={fields.unit} onChange={(e) => update({ unit: e.target.value as ScaleUnit })}>
+              {SCALE_UNITS.map((u) => (
+                <option key={u} value={u}>
+                  {UNIT_LABELS[u]}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+
+        {/* era + year: civil mode, and scale mode for calendar units */}
+        {!relative && (
+          <>
+            <label>
+              {`${label} 纪元`}
+              <select value={fields.era} onChange={(e) => update({ era: e.target.value as TimeFields['era'] })}>
+                <option value="CE">公元</option>
+                <option value="BCE">公元前</option>
+              </select>
+            </label>
+            <label>
+              {`${label} 年`}
+              <input type="number" min="1" value={fields.year} onChange={(e) => update({ year: e.target.value })} />
+            </label>
+          </>
+        )}
+
+        {/* 距今 magnitude: scale mode, relative units (ka/Ma/Ga) */}
+        {relative && (
+          <label>
+            {`${label} 距今`}
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={fields.mag}
+              onChange={(e) => update({ mag: e.target.value })}
+            />
+          </label>
+        )}
+
+        {/* civil sub-fields: month → day → hour → minute */}
+        {fields.mode === 'civil' && (
+          <>
+            <label>
+              {`${label} 月`}
+              <select value={fields.mo} onChange={(e) => update({ mo: e.target.value })}>
+                {blank('—')}
+                {range(1, 12).map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {`${label} 日`}
+              <select value={fields.d} disabled={!fields.mo} onChange={(e) => update({ d: e.target.value })}>
+                {blank('—')}
+                {range(1, maxDay).map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {`${label} 时`}
+              <select value={fields.h} disabled={!fields.d} onChange={(e) => update({ h: e.target.value })}>
+                {blank('—')}
+                {range(0, 23).map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              {`${label} 分`}
+              <select value={fields.mi} disabled={!fields.h} onChange={(e) => update({ mi: e.target.value })}>
+                {blank('—')}
+                {range(0, 59).map((mi) => (
+                  <option key={mi} value={mi}>
+                    {String(mi).padStart(2, '0')}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </>
+        )}
       </div>
+
+      {preview && <span className="mono preview">{preview}</span>}
     </fieldset>
   )
 }

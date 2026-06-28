@@ -44,7 +44,7 @@ describe('EventEditor', () => {
     let closed = false
     renderEditor(null, () => (closed = true))
     await userEvent.type(screen.getByLabelText('标题'), '登月')
-    await userEvent.type(screen.getByLabelText('起点'), '1969')
+    await userEvent.type(screen.getByLabelText('起点 年'), '1969')
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     const events = app.store.getState().events
     expect(events.map((e) => e.title)).toEqual(['登月'])
@@ -74,7 +74,7 @@ describe('EventEditor', () => {
     const other = await app.createEvent({ title: '另一个', start: { year: 1, precision: 'year' } })
     renderEditor(null)
     await userEvent.type(screen.getByLabelText('标题'), '主事件')
-    await userEvent.type(screen.getByLabelText('起点'), '2000')
+    await userEvent.type(screen.getByLabelText('起点 年'), '2000')
     await userEvent.click(screen.getByLabelText('另一个'))
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     const created = app.store.getState().events.find((e) => e.title === '主事件')!

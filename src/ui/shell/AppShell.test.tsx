@@ -40,7 +40,7 @@ describe('AppShell', () => {
     render(<AppShell app={app} />)
     await userEvent.click(screen.getByRole('button', { name: '新建' }))
     await userEvent.type(screen.getByLabelText('标题'), '宇宙大爆炸')
-    await userEvent.type(screen.getByLabelText('起点'), '约138亿年前')
+    await userEvent.type(screen.getByLabelText('起点 年'), '2020')
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
     expect(screen.getByText('宇宙大爆炸')).toBeTruthy()
   })
