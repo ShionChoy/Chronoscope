@@ -66,7 +66,6 @@
 .category-tree { list-style: none; margin: 0; padding: 0; }
 .category-tree ul { list-style: none; margin: 0 0 0 12px; padding: 0; }
 .category-tree button {
-  width: 100%;
   text-align: left;
   border: 0;
   background: transparent;
@@ -78,6 +77,59 @@
 }
 .category-tree button:hover { background: var(--bg); }
 .category-tree button.active { background: var(--accent); color: var(--surface); }
+
+/* category/tag rows: [twisty] pick/label … [count] [×] on a single line.
+   flex-basis 0 makes the pick control grow from zero (ignoring its content/
+   width), so a long name truncates with an ellipsis instead of wrapping. */
+.sidebar .row { display: flex; align-items: center; gap: 4px; }
+.sidebar .row > label,
+.sidebar .row > button:not(.del):not(.twisty) {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar .twisty {
+  flex: 0 0 auto;
+  width: 18px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  line-height: 1;
+}
+.sidebar .twisty:hover { color: var(--text); }
+.sidebar .twisty-spacer { flex: 0 0 auto; width: 18px; }
+.sidebar .row > .count {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.sidebar .del {
+  flex: 0 0 auto;
+  width: auto;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 2px 8px;
+  line-height: 1;
+  border-radius: 4px;
+}
+.sidebar .del:hover { color: var(--now); background: var(--bg); }
+.sidebar button.active {
+  background: var(--accent);
+  color: var(--surface);
+  border-color: var(--accent);
+}
+
+/* inline "create" rows (sidebar + editor): a text field beside an add button */
+.add-row { display: flex; gap: 6px; align-items: center; }
+.add-row input { flex: 1 1 auto; min-width: 0; }
+.add-row button { flex: 0 0 auto; }
 
 /* ---------- view area ---------- */
 .view-area { background: var(--bg); }

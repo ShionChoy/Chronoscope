@@ -23,6 +23,8 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
   const [tagIds, setTagIds] = useState<Id[]>(existing?.tagIds ?? [])
   const [links, setLinks] = useState<Id[]>(existing?.links ?? [])
   const [errors, setErrors] = useState<string[]>([])
+  const [newCatName, setNewCatName] = useState('')
+  const [newTagName, setNewTagName] = useState('')
 
   const liveCategories = state.categories.filter((c) => !c.deleted)
   const liveTags = state.tags.filter((t) => !t.deleted)
@@ -33,6 +35,21 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
   const linkCandidates = state.events.filter((e) => !e.deleted && e.id !== editingId)
   const toggleLink = (id: Id) =>
     setLinks((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+
+  const addCategory = async () => {
+    const name = newCatName.trim()
+    if (!name) return
+    const id = await app.createCategory({ name })
+    setCategoryId(id)
+    setNewCatName('')
+  }
+  const addTag = async () => {
+    const name = newTagName.trim()
+    if (!name) return
+    const id = await app.createTag({ name })
+    setTagIds((prev) => [...prev, id])
+    setNewTagName('')
+  }
 
   const save = async () => {
     const result = validateEvent({ title, start: start ?? undefined, end: end ?? undefined })
@@ -92,6 +109,17 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
           ))}
         </select>
       </label>
+      <div className="add-row">
+        <input
+          aria-label="新建分类"
+          value={newCatName}
+          onChange={(e) => setNewCatName(e.target.value)}
+          placeholder="新建分类"
+        />
+        <button type="button" onClick={addCategory}>
+          添加
+        </button>
+      </div>
 
       <fieldset>
         <legend>标签</legend>
@@ -101,6 +129,17 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
             {t.name}
           </label>
         ))}
+        <div className="add-row">
+          <input
+            aria-label="新建标签"
+            value={newTagName}
+            onChange={(e) => setNewTagName(e.target.value)}
+            placeholder="新建标签"
+          />
+          <button type="button" onClick={addTag}>
+            添加
+          </button>
+        </div>
       </fieldset>
 
       <fieldset>
