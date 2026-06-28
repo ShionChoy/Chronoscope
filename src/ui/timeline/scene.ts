@@ -54,6 +54,7 @@ export interface BuildSceneInput {
 
 const LABEL_GAP = 80
 const MARKER_BUCKET_PX = 6
+const MIN_LENS_PX = 2 // keep the lens visible even when it degenerates at a band edge
 
 export function aggregateMarkers(items: { x: number; eventId: Id }[], bucketPx: number): SceneMarker[] {
   const buckets = new Map<number, { x: number; eventId: Id }[]>()
@@ -151,9 +152,16 @@ export function buildScene(input: BuildSceneInput): TimelineScene {
   }
   const markers = aggregateMarkers(rawMarkers, MARKER_BUCKET_PX)
 
+  // Lens = the detail view projected onto the (linear) overview. Clamp it into
+  // the band, keep a minimum visible width, then shift it fully inside — so it
+  // never spills past an edge when the view sits outside the overview's current
+  // (zoomed) extent.
   const lens = lensFromView(view, overview)
-  const x0 = Math.min(Math.max(lens.f0, 0), 1) * width
-  const x1 = Math.min(Math.max(lens.f1, 0), 1) * width
+  const lx0 = Math.min(Math.max(lens.f0, 0), 1) * width
+  const lx1 = Math.min(Math.max(lens.f1, 0), 1) * width
+  const lensW = Math.min(Math.max(lx1 - lx0, MIN_LENS_PX), width)
+  const x0 = Math.max(0, Math.min(lx0, width - lensW))
+  const x1 = x0 + lensW
   return {
     width,
     detail: { ticks, glyphs, rowCount },

@@ -50,6 +50,17 @@ describe('buildScene', () => {
     expect(scene.overview.lens.x1).toBeLessThanOrEqual(base.width)
     expect(scene.overview.lens.x0).toBeLessThan(scene.overview.lens.x1)
   })
+  it('keeps the lens inside the band when the view is outside the overview extent', () => {
+    // overview zoomed onto an older window; the detail view lies entirely to its right
+    const right = buildScene({ ...base, overview: { min: 1000, max: 1100 }, view: { min: 2000, max: 2100 }, events: [] })
+    expect(right.overview.lens.x0).toBeGreaterThanOrEqual(0)
+    expect(right.overview.lens.x1).toBeLessThanOrEqual(base.width)
+    expect(right.overview.lens.x1 - right.overview.lens.x0).toBeGreaterThanOrEqual(2) // still visible
+    // ...and entirely to its left
+    const left = buildScene({ ...base, overview: { min: 3000, max: 3100 }, view: { min: 2000, max: 2100 }, events: [] })
+    expect(left.overview.lens.x0).toBeGreaterThanOrEqual(0)
+    expect(left.overview.lens.x1).toBeLessThanOrEqual(base.width)
+  })
   it('labels ticks and keeps them within the width', () => {
     const scene = buildScene({ ...base, events: [] })
     expect(scene.detail.ticks.length).toBeGreaterThan(0)
