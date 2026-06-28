@@ -26,6 +26,10 @@ function fakeCtx() {
     arc: method('arc'),
     fill: method('fill'),
     fillText: method('fillText'),
+    measureText: (...args: unknown[]) => {
+      calls.push(`measureText(${args.length})`)
+      return { width: 10 }
+    },
     createLinearGradient: (...args: unknown[]) => {
       calls.push(`createLinearGradient(${args.length})`)
       return { addColorStop: () => {} }
@@ -49,7 +53,11 @@ const scene: TimelineScene = {
     ],
     rowCount: 2,
   },
-  overview: { markers: [{ x: 100, count: 1, eventId: 'a' }, { x: 900, count: 1, eventId: 'b' }], lens: { x0: 200, x1: 600 } },
+  overview: {
+    markers: [{ x: 100, count: 1, eventId: 'a' }, { x: 900, count: 1, eventId: 'b' }],
+    lens: { x0: 200, x1: 600 },
+    range: { start: '约5.0亿年前', end: '2026年' },
+  },
 }
 
 describe('renderer', () => {
@@ -89,7 +97,7 @@ describe('renderer', () => {
     expect(count('fillRect')).toBe(5) // bg + span glyph + overview band + band wash + lens fill
     expect(count('arc')).toBe(1) // one point glyph
     expect(count('strokeRect')).toBe(1) // lens border
-    expect(count('fillText')).toBe(4) // 2 tick labels + 2 glyph titles
+    expect(count('fillText')).toBe(6) // 2 tick labels + 2 glyph titles + 2 overview range labels
   })
   it('washes the overview with a deep-time→now gradient and colors markers by depth', () => {
     const ctx = fakeCtx()

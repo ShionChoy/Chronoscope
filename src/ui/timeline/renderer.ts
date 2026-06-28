@@ -132,4 +132,11 @@ export function drawScene(
   ctx.globalAlpha = 1
   ctx.strokeStyle = colors.now
   ctx.strokeRect(x0, layout.overviewTop, Math.max(2, x1 - x0), layout.overviewHeight)
+
+  // current overview time range — labelled at both ends of the band, on top
+  ctx.fillStyle = colors.muted
+  const ry = layout.overviewTop + 12
+  ctx.fillText(scene.overview.range.start, 4, ry)
+  const end = scene.overview.range.end
+  ctx.fillText(end, scene.width - ctx.measureText(end).width - 4, ry)
 }

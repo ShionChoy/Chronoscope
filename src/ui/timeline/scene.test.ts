@@ -61,6 +61,16 @@ describe('buildScene', () => {
     expect(left.overview.lens.x0).toBeGreaterThanOrEqual(0)
     expect(left.overview.lens.x1).toBeLessThanOrEqual(base.width)
   })
+  it('labels the overview band with its current time range', () => {
+    const scene = buildScene({ ...base, events: [] })
+    expect(scene.overview.range.start).toBe('2000年')
+    expect(scene.overview.range.end).toBe('2100年')
+  })
+  it('uses a relative label for a deep-time overview bound', () => {
+    const scene = buildScene({ ...base, overview: { min: 2026 - 5e8, max: 2026 - 1e6 }, events: [] })
+    expect(scene.overview.range.start).toBe('约5.0亿年前')
+    expect(scene.overview.range.end).toBe('约100万年前')
+  })
   it('labels ticks and keeps them within the width', () => {
     const scene = buildScene({ ...base, events: [] })
     expect(scene.detail.ticks.length).toBeGreaterThan(0)

@@ -37,7 +37,11 @@ export interface SceneMarker {
 export interface TimelineScene {
   width: number
   detail: { ticks: SceneTick[]; glyphs: SceneGlyph[]; rowCount: number }
-  overview: { markers: SceneMarker[]; lens: { x0: number; x1: number } }
+  overview: {
+    markers: SceneMarker[]
+    lens: { x0: number; x1: number }
+    range: { start: string; end: string }
+  }
 }
 
 export interface BuildSceneInput {
@@ -77,6 +81,14 @@ export function eventInstant(e: EventRecord): number | null {
   if (e.start) return instantOf(e.start)
   if (e.end) return instantOf(e.end)
   return null
+}
+
+// Label a decimal year for the overview's range readout: an absolute year near
+// the present, a relative "约X…年前/后" deeper in time (the formatter picks the
+// 亿/万/年 unit automatically for relative precisions).
+function rangeLabel(year: number, nowYear: number): string {
+  const precision = Math.abs(nowYear - year) >= 1000 ? 'ka' : 'year'
+  return formatTimePoint(fromYear(year, precision), nowYear)
 }
 
 export function buildScene(input: BuildSceneInput): TimelineScene {
@@ -162,9 +174,10 @@ export function buildScene(input: BuildSceneInput): TimelineScene {
   const lensW = Math.min(Math.max(lx1 - lx0, MIN_LENS_PX), width)
   const x0 = Math.max(0, Math.min(lx0, width - lensW))
   const x1 = x0 + lensW
+  const range = { start: rangeLabel(overview.min, nowYear), end: rangeLabel(overview.max, nowYear) }
   return {
     width,
     detail: { ticks, glyphs, rowCount },
-    overview: { markers, lens: { x0, x1 } },
+    overview: { markers, lens: { x0, x1 }, range },
   }
 }
