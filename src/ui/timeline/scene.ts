@@ -96,7 +96,7 @@ export function buildScene(input: BuildSceneInput): TimelineScene {
   const xOf = (year: number) => projectLinear(year, view) * width
 
   const ticks: SceneTick[] = generateTicks(view)
-    .map((t) => ({ x: xOf(t.year), label: formatTimePoint(fromYear(t.year, t.precision), nowYear) }))
+    .map((tp) => ({ x: xOf(instantOf(tp)), label: formatTimePoint(tp, nowYear) }))
     .filter((t) => t.x >= 0 && t.x <= width)
 
   type Raw = Omit<SceneGlyph, 'row'> & { left: number; right: number }

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { chooseTickPrecision, generateTicks } from './ticks'
+import { decimalFromCivil } from './decimal'
 
 describe('chooseTickPrecision', () => {
   it('picks a unit giving a readable number of ticks', () => {
@@ -17,5 +18,24 @@ describe('generateTicks', () => {
     expect(ticks[0].year).toBeGreaterThanOrEqual(1995)
     expect(ticks[ticks.length - 1].year).toBeLessThanOrEqual(2025)
     for (const t of ticks) expect(t.precision).toBe('decade')
+  })
+  it('steps month-aligned ticks with civil dates for a sub-year range', () => {
+    const view = { min: decimalFromCivil({ y: 2026, mo: 1 }), max: decimalFromCivil({ y: 2026, mo: 7 }) }
+    const ticks = generateTicks(view)
+    expect(ticks.length).toBeGreaterThanOrEqual(4)
+    for (const t of ticks) {
+      expect(t.precision).toBe('month')
+      expect(t.civil).toBeDefined()
+      expect(Number.isInteger(t.civil!.mo)).toBe(true)
+    }
+  })
+  it('steps day-aligned ticks for a multi-day range', () => {
+    const view = { min: decimalFromCivil({ y: 2026, mo: 3, d: 10 }), max: decimalFromCivil({ y: 2026, mo: 3, d: 18 }) }
+    const ticks = generateTicks(view)
+    expect(ticks.length).toBeGreaterThanOrEqual(5)
+    for (const t of ticks) {
+      expect(t.precision).toBe('day')
+      expect(t.civil?.d).toBeGreaterThanOrEqual(1)
+    }
   })
 })
