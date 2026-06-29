@@ -51,11 +51,20 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
   const sceneRef = useRef<TimelineScene | null>(null)
   const layoutRef = useRef(computeLayout(0))
   const [size, setSize] = useState({ w: 0, h: 0 })
-  const [view, setView] = useState<LinearView>(bounds)
-  // The overview band's shown extent. Linear (so the lens keeps a constant width
-  // while panning) and independently zoomable/pannable within `bounds`, letting
-  // you spread out a crowded era without touching the detail view.
-  const [overview, setOverview] = useState<LinearView>(bounds)
+
+  // The detail view and the overview band's extent live in the app store, not
+  // local state, so the user's zoom/pan survives switching to the list view and
+  // back (this component unmounts on a view switch). Until the user interacts
+  // they fall back to `bounds`, so they still fit the data once events load.
+  // `boundsRef` feeds that fallback into the store updaters.
+  const boundsRef = useRef(bounds)
+  boundsRef.current = bounds
+  const view = state.timelineView ?? bounds
+  const overview = state.timelineOverview ?? bounds
+  const setView = (u: LinearView | ((v: LinearView) => LinearView)) =>
+    app.setTimelineView((prev) => (typeof u === 'function' ? u(prev ?? boundsRef.current) : u))
+  const setOverview = (u: LinearView | ((o: LinearView) => LinearView)) =>
+    app.setTimelineOverview((prev) => (typeof u === 'function' ? u(prev ?? boundsRef.current) : u))
 
   // track element size
   useEffect(() => {

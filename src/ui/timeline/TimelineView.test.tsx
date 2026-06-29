@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { TimelineView } from './TimelineView'
 import { AppStoreProvider, createAppStore, type AppStore } from '../../state'
 import { createMemoryRepository, type Database, type Clock } from '../../data'
@@ -47,5 +47,23 @@ describe('TimelineView', () => {
     app.select(id)
     renderTimeline()
     expect(screen.getByText('登月')).toBeTruthy()
+  })
+  it('writes scale changes into the store so they survive a view switch', async () => {
+    await app.createEvent({
+      title: 'a',
+      start: { year: 1000, precision: 'year' },
+      end: { year: 2000, precision: 'year' },
+    })
+    const { container } = renderTimeline()
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement
+    // jsdom has no layout; give the canvas a non-zero rect so the wheel handler
+    // computes a real cursor fraction.
+    canvas.getBoundingClientRect = () =>
+      ({ left: 0, top: 0, right: 1000, bottom: 400, width: 1000, height: 400, x: 0, y: 0, toJSON: () => ({}) }) as DOMRect
+    expect(app.store.getState().timelineView).toBeNull()
+    expect(app.store.getState().timelineOverview).toBeNull()
+    fireEvent.wheel(canvas, { clientX: 500, clientY: 10, deltaY: -100 })
+    const s = app.store.getState()
+    expect(s.timelineView !== null || s.timelineOverview !== null).toBe(true)
   })
 })
