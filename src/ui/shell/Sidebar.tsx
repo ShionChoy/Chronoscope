@@ -1,24 +1,48 @@
-import { useState } from 'react'
-import { useAppStore, useAppState, buildCategoryTree, categoryEventCounts, descendantCategoryIds } from '../../state'
+import { useEffect, useState } from 'react'
+import {
+  useAppStore,
+  useAppState,
+  buildCategoryTree,
+  categoryEventCounts,
+  descendantCategoryIds,
+  flattenCategoryTree,
+  assignableParents,
+} from '../../state'
 import type { CategoryNode } from '../../state'
-import type { Id } from '../../domain/model'
+import type { Category, Id } from '../../domain/model'
+import { CATEGORY_PRESETS, nextPresetColor, loadCustomColors, persistCustomColors, addToPalette } from '../categoryColors'
+import { ColorPicker } from './ColorPicker'
 
 function CategoryTree({
   nodes,
+  categories,
   selectedId,
   counts,
   collapsed,
+  custom,
+  colorOpenFor,
   onPick,
   onDelete,
   onToggle,
+  onMove,
+  onToggleColor,
+  onPickColor,
+  onAddCustom,
 }: {
   nodes: CategoryNode[]
+  categories: Category[]
   selectedId: Id | null
   counts: Map<Id, number>
   collapsed: Set<Id>
+  custom: string[]
+  colorOpenFor: Id | null
   onPick: (id: Id) => void
   onDelete: (id: Id, name: string) => void
   onToggle: (id: Id) => void
+  onMove: (id: Id, parentId: Id | null) => void
+  onToggleColor: (id: Id) => void
+  onPickColor: (id: Id, hex: string) => void
+  onAddCustom: (hex: string) => void
 }) {
   if (nodes.length === 0) return null
   return (
@@ -27,6 +51,7 @@ function CategoryTree({
         const id = n.category.id
         const hasChildren = n.children.length > 0
         const isCollapsed = collapsed.has(id)
+        const targets = assignableParents(categories, id)
         return (
           <li key={id}>
             <div className="row">
@@ -45,12 +70,34 @@ function CategoryTree({
               )}
               <button
                 type="button"
-                className={selectedId === id ? 'active' : ''}
-                onClick={() => onPick(id)}
-              >
+                className="color-dot"
+                style={{ background: n.category.color }}
+                aria-label={`设置「${n.category.name}」颜色`}
+                onClick={() => onToggleColor(id)}
+              />
+              <button type="button" className={selectedId === id ? 'active' : ''} onClick={() => onPick(id)}>
                 {n.category.name}
               </button>
               <span className="count">{counts.get(id) ?? 0}</span>
+              <select
+                className="move"
+                aria-label={`移动「${n.category.name}」`}
+                value=""
+                onChange={(e) => {
+                  const v = e.target.value
+                  if (v === '') return
+                  onMove(id, v === '__root__' ? null : (v as Id))
+                  e.target.value = ''
+                }}
+              >
+                <option value="">移动</option>
+                <option value="__root__">顶级</option>
+                {targets.map((t) => (
+                  <option key={t.category.id} value={t.category.id}>
+                    {'　'.repeat(t.depth) + t.category.name}
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
                 className="del"
@@ -60,15 +107,31 @@ function CategoryTree({
                 ×
               </button>
             </div>
+            {colorOpenFor === id && (
+              <ColorPicker
+                value={n.category.color}
+                presets={CATEGORY_PRESETS}
+                custom={custom}
+                onPick={(hex) => onPickColor(id, hex)}
+                onAddCustom={onAddCustom}
+              />
+            )}
             {hasChildren && !isCollapsed && (
               <CategoryTree
                 nodes={n.children}
+                categories={categories}
                 selectedId={selectedId}
                 counts={counts}
                 collapsed={collapsed}
+                custom={custom}
+                colorOpenFor={colorOpenFor}
                 onPick={onPick}
                 onDelete={onDelete}
                 onToggle={onToggle}
+                onMove={onMove}
+                onToggleColor={onToggleColor}
+                onPickColor={onPickColor}
+                onAddCustom={onAddCustom}
               />
             )}
           </li>
@@ -86,11 +149,20 @@ export function Sidebar({ open = false }: { open?: boolean }) {
   const liveEvents = state.events.filter((e) => !e.deleted)
   const totalCount = liveEvents.length
   const uncategorizedCount = liveEvents.filter((e) => e.categoryId == null).length
+  const liveCategories = state.categories.filter((c) => !c.deleted)
   const liveTags = state.tags.filter((t) => !t.deleted)
+  const parentOptions = flattenCategoryTree(state.categories)
 
   const [collapsed, setCollapsed] = useState<Set<Id>>(new Set())
   const [newCat, setNewCat] = useState('')
+  const [newCatParent, setNewCatParent] = useState<Id | ''>('')
   const [newTag, setNewTag] = useState('')
+  const [customColors, setCustomColors] = useState<string[]>(() => loadCustomColors(window.localStorage))
+  const [colorOpenFor, setColorOpenFor] = useState<Id | null>(null)
+
+  useEffect(() => {
+    persistCustomColors(window.localStorage, customColors)
+  }, [customColors])
 
   const toggleCollapse = (id: Id) =>
     setCollapsed((prev) => {
@@ -111,8 +183,9 @@ export function Sidebar({ open = false }: { open?: boolean }) {
   const addCategory = async () => {
     const name = newCat.trim()
     if (!name) return
-    await app.createCategory({ name })
+    await app.createCategory({ name, parentId: newCatParent || null, color: nextPresetColor(liveCategories.length) })
     setNewCat('')
+    setNewCatParent('')
   }
 
   const deleteCategory = (id: Id, name: string) => {
@@ -126,6 +199,14 @@ export function Sidebar({ open = false }: { open?: boolean }) {
     app.deleteCategory(id)
     if (state.filter.categoryId != null && ids.has(state.filter.categoryId)) app.setFilter({ categoryId: null })
   }
+
+  const moveCategory = (id: Id, parentId: Id | null) => void app.moveCategory(id, parentId)
+  const toggleColor = (id: Id) => setColorOpenFor((cur) => (cur === id ? null : id))
+  const pickColor = (id: Id, hex: string) => {
+    void app.updateCategory(id, { color: hex })
+    setColorOpenFor(null)
+  }
+  const addCustom = (hex: string) => setCustomColors((prev) => addToPalette(prev, hex))
 
   const addTag = async () => {
     const name = newTag.trim()
@@ -179,12 +260,19 @@ export function Sidebar({ open = false }: { open?: boolean }) {
         </div>
         <CategoryTree
           nodes={tree}
+          categories={state.categories}
           selectedId={state.filter.categoryId}
           counts={counts}
           collapsed={collapsed}
+          custom={customColors}
+          colorOpenFor={colorOpenFor}
           onPick={pickCategory}
           onDelete={deleteCategory}
           onToggle={toggleCollapse}
+          onMove={moveCategory}
+          onToggleColor={toggleColor}
+          onPickColor={pickColor}
+          onAddCustom={addCustom}
         />
         <div className="add-row">
           <input
@@ -196,6 +284,14 @@ export function Sidebar({ open = false }: { open?: boolean }) {
             }}
             placeholder="新建分类"
           />
+          <select aria-label="父分类" value={newCatParent} onChange={(e) => setNewCatParent(e.target.value as Id | '')}>
+            <option value="">顶级</option>
+            {parentOptions.map((t) => (
+              <option key={t.category.id} value={t.category.id}>
+                {'　'.repeat(t.depth) + t.category.name}
+              </option>
+            ))}
+          </select>
           <button type="button" onClick={addCategory}>
             添加
           </button>

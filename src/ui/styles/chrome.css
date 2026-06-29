@@ -143,7 +143,7 @@
    width), so a long name truncates with an ellipsis instead of wrapping. */
 .sidebar .row { display: flex; align-items: center; gap: 4px; }
 .sidebar .row > label,
-.sidebar .row > button:not(.del):not(.twisty) {
+.sidebar .row > button:not(.del):not(.twisty):not(.color-dot) {
   flex: 1 1 0;
   min-width: 0;
   width: auto;
@@ -180,6 +180,55 @@
   border-radius: 4px;
 }
 .sidebar .del:hover { color: var(--now); background: var(--bg); }
+/* color dot (folder color indicator + picker trigger) */
+.color-dot {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  cursor: pointer;
+}
+/* per-row "move to parent" action select, kept compact in the 248px sidebar */
+.sidebar .row > select.move {
+  flex: 0 0 auto;
+  max-width: 4.5em;
+  padding: 2px 4px;
+  font-size: 12px;
+}
+.add-row select { flex: 0 0 auto; max-width: 7em; }
+
+/* color picker popover under a folder row */
+.color-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 2px 0 6px 24px;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.color-picker .swatches { display: flex; flex-wrap: wrap; gap: 6px; }
+.color-picker .swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+}
+.color-picker .swatch.selected { outline: 2px solid var(--accent); outline-offset: 1px; }
+.color-picker .add-custom {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+  color: var(--muted);
+}
 .sidebar button.active {
   background: var(--accent);
   color: var(--surface);

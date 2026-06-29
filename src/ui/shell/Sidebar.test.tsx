@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { CATEGORY_PRESETS } from '../categoryColors'
 import { Sidebar } from './Sidebar'
 import { AppStoreProvider, createAppStore, type AppStore } from '../../state'
 import { createMemoryRepository, type Database, type Clock } from '../../data'
@@ -111,5 +112,31 @@ describe('Sidebar', () => {
     renderSidebar()
     const row = screen.getByRole('button', { name: '历史' }).closest('.row') as HTMLElement
     expect(row.querySelector('.count')?.textContent).toBe('2')
+  })
+
+  it('creates a sub-category under a chosen parent', async () => {
+    const parent = await app.createCategory({ name: '历史' })
+    renderSidebar()
+    await userEvent.type(screen.getByLabelText('新建分类'), '近代')
+    await userEvent.selectOptions(screen.getByLabelText('父分类'), parent)
+    const addRow = screen.getByLabelText('新建分类').closest('.add-row') as HTMLElement
+    await userEvent.click(within(addRow).getByRole('button', { name: '添加' }))
+    expect(app.store.getState().categories.find((c) => c.name === '近代')?.parentId).toBe(parent)
+  })
+
+  it('moves a category to a new parent via the row select', async () => {
+    const a = await app.createCategory({ name: 'A' })
+    const b = await app.createCategory({ name: 'B' })
+    renderSidebar()
+    await userEvent.selectOptions(screen.getByLabelText('移动「B」'), a)
+    expect(app.store.getState().categories.find((c) => c.id === b)?.parentId).toBe(a)
+  })
+
+  it('sets a category color from the picker dot', async () => {
+    const a = await app.createCategory({ name: 'A', color: '#000000' })
+    renderSidebar()
+    await userEvent.click(screen.getByRole('button', { name: '设置「A」颜色' }))
+    await userEvent.click(screen.getByLabelText(`颜色 ${CATEGORY_PRESETS[0]}`))
+    expect(app.store.getState().categories.find((c) => c.id === a)?.color).toBe(CATEGORY_PRESETS[0])
   })
 })
