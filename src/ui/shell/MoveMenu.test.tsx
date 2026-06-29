@@ -18,4 +18,14 @@ describe('MoveMenu', () => {
     await userEvent.click(screen.getByRole('menuitem', { name: /「B」/ }))
     expect(onMove).toHaveBeenCalledWith('b')
   })
+
+  it('uses a custom topLabel when given, defaulting to 顶级', async () => {
+    const onMove = vi.fn()
+    const targets = [{ category: cat({ id: 'a', name: 'A' }), depth: 0 }]
+    const { rerender } = render(<MoveMenu targets={targets} onMove={onMove} />)
+    expect(screen.getByRole('menuitem', { name: '顶级' })).toBeTruthy()
+    rerender(<MoveMenu targets={targets} onMove={onMove} topLabel="未分类" />)
+    await userEvent.click(screen.getByRole('menuitem', { name: '未分类' }))
+    expect(onMove).toHaveBeenCalledWith(null)
+  })
 })
