@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { TimeInput } from './TimeInput'
 import { useAppStore, useAppState } from '../../state'
 import { validateEvent } from '../../domain/model'
-import type { TimePoint } from '../../domain/time'
+import { withFuzz, type TimePoint } from '../../domain/time'
 import type { Id } from '../../domain/model'
+import { FuzzInput, type FuzzValue } from './FuzzInput'
 
 export interface EventEditorProps {
   editingId: Id | null
@@ -22,6 +23,8 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
   const [categoryId, setCategoryId] = useState<Id | ''>(existing?.categoryId ?? '')
   const [tagIds, setTagIds] = useState<Id[]>(existing?.tagIds ?? [])
   const [links, setLinks] = useState<Id[]>(existing?.links ?? [])
+  const [startFuzz, setStartFuzz] = useState<FuzzValue | undefined>(existing?.start?.fuzz)
+  const [endFuzz, setEndFuzz] = useState<FuzzValue | undefined>(existing?.end?.fuzz)
   const [errors, setErrors] = useState<string[]>([])
   const [newCatName, setNewCatName] = useState('')
   const [newTagName, setNewTagName] = useState('')
@@ -59,8 +62,8 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
     }
     const fields = {
       title,
-      start: start ?? undefined,
-      end: end ?? undefined,
+      start: start ? withFuzz(start, startFuzz) : undefined,
+      end: end ? withFuzz(end, endFuzz) : undefined,
       note,
       categoryId: categoryId === '' ? null : categoryId,
       tagIds,
@@ -91,7 +94,9 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
       </label>
 
       <TimeInput label="起点" value={start} nowYear={state.nowYear} onChange={setStart} />
+      <FuzzInput label="起点" value={startFuzz} onChange={setStartFuzz} />
       <TimeInput label="终点" value={end} nowYear={state.nowYear} onChange={setEnd} />
+      <FuzzInput label="终点" value={endFuzz} onChange={setEndFuzz} />
 
       <label>
         备注

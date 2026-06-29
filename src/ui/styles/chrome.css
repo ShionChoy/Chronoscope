@@ -315,3 +315,9 @@ legend {
     background: rgb(0 0 0 / 0.4);
   }
 }
+
+/* explicit fuzzy-range control under each time input */
+.fuzz-input { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: -4px 0 4px; font-size: 13px; }
+.fuzz-input .fuzz-label { color: var(--muted); }
+.fuzz-input input[type='number'] { width: 84px; }
+.fuzz-input .fuzz-asym { display: flex; align-items: center; gap: 4px; color: var(--muted); }

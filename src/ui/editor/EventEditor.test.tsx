@@ -80,4 +80,16 @@ describe('EventEditor', () => {
     const created = app.store.getState().events.find((e) => e.title === '主事件')!
     expect(created.links).toEqual([other])
   })
+
+  it('saves an explicit fuzz range on the start', async () => {
+    let closed = false
+    renderEditor(null, () => (closed = true))
+    await userEvent.type(screen.getByLabelText('标题'), '地球形成')
+    await userEvent.type(screen.getByLabelText('起点 年'), '1969')
+    await userEvent.type(screen.getByLabelText('起点 模糊±'), '5')
+    await userEvent.click(screen.getByRole('button', { name: '保存' }))
+    const e = app.store.getState().events[0]
+    expect(e.start?.fuzz).toEqual({ before: 5, after: 5 })
+    expect(closed).toBe(true)
+  })
 })
