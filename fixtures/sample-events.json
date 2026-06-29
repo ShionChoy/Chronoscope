@@ -57,7 +57,8 @@
       "title": "白垩纪–古近纪灭绝事件",
       "start": {
         "year": -65997974,
-        "precision": "Ma"
+        "precision": "Ma",
+        "fuzz": { "before": 1000000, "after": 1000000 }
       },
       "note": "一颗小行星撞击地球,非鸟类恐龙灭绝。",
       "categoryId": "c-geo",

@@ -88,6 +88,13 @@ describe('buildScene', () => {
     expect(s.detail.glyphs[0].whiskers.length).toBe(1)
     expect(s.detail.glyphs[0].whiskers[0].hi).toBeGreaterThan(s.detail.glyphs[0].whiskers[0].lo)
   })
+  it('emits two independent whisker segments for a span with both endpoints fuzzy', () => {
+    const s = buildScene({
+      ...base,
+      events: [ev({ id: 'sp', start: withFuzz(y(2025), { before: 3, after: 3 }), end: withFuzz(y(2075), { before: 4, after: 4 }) })],
+    })
+    expect(s.detail.glyphs[0].whiskers.length).toBe(2)
+  })
 })
 
 describe('aggregateMarkers', () => {

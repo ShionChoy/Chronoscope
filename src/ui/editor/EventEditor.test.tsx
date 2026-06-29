@@ -88,7 +88,7 @@ describe('EventEditor', () => {
     await userEvent.type(screen.getByLabelText('起点 年'), '1969')
     await userEvent.type(screen.getByLabelText('起点 模糊±'), '5')
     await userEvent.click(screen.getByRole('button', { name: '保存' }))
-    const e = app.store.getState().events[0]
+    const e = app.store.getState().events.find((ev) => ev.title === '地球形成')!
     expect(e.start?.fuzz).toEqual({ before: 5, after: 5 })
     expect(closed).toBe(true)
   })
