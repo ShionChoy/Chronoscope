@@ -1,6 +1,6 @@
 import { useAppStore, useAppState, visibleEvents } from '../../state'
 import type { Sort } from '../../state'
-import { formatTimePoint } from '../../domain/time'
+import { formatTimeRange } from './timeText'
 import type { Id } from '../../domain/model'
 
 export interface ListViewProps {
@@ -32,7 +32,7 @@ export function ListView({ onEdit }: ListViewProps) {
       <thead>
         <tr>
           {COLUMNS.map((c) => (
-            <th key={c.key}>
+            <th key={c.key} className={c.key === 'updated' ? 'col-updated' : undefined}>
               <button type="button" onClick={() => clickHeader(c.key)}>
                 {c.label}
                 {state.sort.key === c.key && (
@@ -42,7 +42,7 @@ export function ListView({ onEdit }: ListViewProps) {
             </th>
           ))}
           <th>标签</th>
-          <th>备注</th>
+          <th className="col-note">备注</th>
         </tr>
       </thead>
       <tbody>
@@ -61,12 +61,12 @@ export function ListView({ onEdit }: ListViewProps) {
               onEdit(e.id)
             }}
           >
-            <td className="mono">{e.start ? formatTimePoint(e.start, state.nowYear) : '—'}</td>
+            <td className="mono">{formatTimeRange(e.start, e.end, state.nowYear)}</td>
             <td>{e.title}</td>
             <td>{catName(e.categoryId)}</td>
-            <td className="mono">{e.updatedAt}</td>
+            <td className="mono col-updated">{e.updatedAt}</td>
             <td>{tagNames(e.tagIds) || '—'}</td>
-            <td>{e.note.slice(0, 60)}</td>
+            <td className="col-note">{e.note.slice(0, 60)}</td>
           </tr>
         ))}
       </tbody>
