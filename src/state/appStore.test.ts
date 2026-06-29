@@ -154,4 +154,25 @@ describe('appStore', () => {
     app.setTimelineOverview((prev) => (prev ? prev : { min: -10, max: 10 }))
     expect(app.store.getState().timelineOverview).toEqual({ min: -10, max: 10 })
   })
+
+  it('moveCategory reparents a category under another', async () => {
+    const a = await app.createCategory({ name: 'A' })
+    const b = await app.createCategory({ name: 'B' })
+    await app.moveCategory(b, a)
+    expect(app.store.getState().categories.find((c) => c.id === b)?.parentId).toBe(a)
+  })
+
+  it('moveCategory promotes a child to top-level', async () => {
+    const a = await app.createCategory({ name: 'A' })
+    const b = await app.createCategory({ name: 'B', parentId: a })
+    await app.moveCategory(b, null)
+    expect(app.store.getState().categories.find((c) => c.id === b)?.parentId).toBeNull()
+  })
+
+  it('moveCategory refuses to move a category into its own descendant (no cycle)', async () => {
+    const a = await app.createCategory({ name: 'A' })
+    const b = await app.createCategory({ name: 'B', parentId: a })
+    await app.moveCategory(a, b) // would make A a child of its own descendant
+    expect(app.store.getState().categories.find((c) => c.id === a)?.parentId).toBeNull()
+  })
 })

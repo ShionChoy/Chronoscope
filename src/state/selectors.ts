@@ -107,3 +107,22 @@ export function visibleEvents(state: AppState): EventRecord[] {
     return String(va).localeCompare(String(vb)) * dir
   })
 }
+
+export function flattenCategoryTree(categories: Category[]): { category: Category; depth: number }[] {
+  const out: { category: Category; depth: number }[] = []
+  const walk = (nodes: CategoryNode[], depth: number) => {
+    for (const n of nodes) {
+      out.push({ category: n.category, depth })
+      walk(n.children, depth + 1)
+    }
+  }
+  walk(buildCategoryTree(categories), 0)
+  return out
+}
+
+// Valid new parents for `id`: every live category except `id` itself and its
+// descendants (moving into one of those would create a cycle).
+export function assignableParents(categories: Category[], id: Id): { category: Category; depth: number }[] {
+  const excluded = descendantCategoryIds(categories, id)
+  return flattenCategoryTree(categories).filter((e) => !excluded.has(e.category.id))
+}

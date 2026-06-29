@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { descendantCategoryIds, buildCategoryTree, categoryEventCounts, visibleEvents } from './selectors'
+import { descendantCategoryIds, buildCategoryTree, categoryEventCounts, visibleEvents, flattenCategoryTree, assignableParents } from './selectors'
 import { initialAppState, type AppState } from './types'
 import { ev, cat, y } from '../test/fixtures'
 
@@ -130,5 +130,23 @@ describe('visibleEvents', () => {
       sort: { key: 'start', dir: 'asc' },
     })
     expect(visibleEvents(s).map((e) => e.id)).toEqual(['dated', 'nodate'])
+  })
+})
+
+describe('flattenCategoryTree', () => {
+  it('lists live categories depth-first with their depth', () => {
+    const cats = [cat({ id: 'a' }), cat({ id: 'b', parentId: 'a' }), cat({ id: 'c', order: 1 })]
+    expect(flattenCategoryTree(cats).map((e) => [e.category.id, e.depth])).toEqual([
+      ['a', 0],
+      ['b', 1],
+      ['c', 0],
+    ])
+  })
+})
+
+describe('assignableParents', () => {
+  it('excludes the category itself and all its descendants', () => {
+    const cats = [cat({ id: 'a' }), cat({ id: 'b', parentId: 'a' }), cat({ id: 'c', parentId: 'b' }), cat({ id: 'd' })]
+    expect(assignableParents(cats, 'a').map((e) => e.category.id)).toEqual(['d'])
   })
 })

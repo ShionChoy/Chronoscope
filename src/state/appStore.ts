@@ -32,6 +32,7 @@ export interface AppStore {
   createCategory(fields: { name: string; parentId?: Id | null; color?: string; order?: number }): Promise<Id>
   updateCategory(id: Id, changes: Partial<Category>): Promise<void>
   deleteCategory(id: Id): Promise<void>
+  moveCategory(id: Id, parentId: Id | null): Promise<void>
   createTag(fields: { name: string; color?: string }): Promise<Id>
   updateTag(id: Id, changes: Partial<Tag>): Promise<void>
   deleteTag(id: Id): Promise<void>
@@ -153,6 +154,18 @@ export function createAppStore(deps: AppStoreDeps): AppStore {
         const selectedDeleted = events.some((e) => e.id === st.selectedId)
         return { ...st, categories, events: evs, selectedId: selectedDeleted ? null : st.selectedId }
       })
+    },
+
+    async moveCategory(id, parentId) {
+      const s = store.getState()
+      const current = s.categories.find((c) => c.id === id)
+      if (!current) throw new Error(`moveCategory: no category ${id}`)
+      // A category may not become its own ancestor. The UI never offers such a
+      // target; this is the defensive guard, so an invalid move is a no-op.
+      if (parentId !== null && descendantCategoryIds(s.categories, id).has(parentId)) return
+      const next = touch(current, { parentId }, clock)
+      await db.categories.put(next)
+      store.setState((st) => ({ ...st, categories: upsert(st.categories, next) }))
     },
 
     async createTag(fields) {
