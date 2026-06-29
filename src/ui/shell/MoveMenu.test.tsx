@@ -6,16 +6,16 @@ import { MoveMenu } from './MoveMenu'
 import { cat } from '../../test/fixtures'
 
 describe('MoveMenu', () => {
-  it('renders 移至顶级 plus a menuitem per target and reports the chosen parent', async () => {
+  it('renders 顶级 plus a menuitem per target and reports the chosen parent', async () => {
     const onMove = vi.fn()
     const targets = [
       { category: cat({ id: 'a', name: 'A' }), depth: 0 },
       { category: cat({ id: 'b', name: 'B' }), depth: 1 },
     ]
     render(<MoveMenu targets={targets} onMove={onMove} />)
-    await userEvent.click(screen.getByRole('menuitem', { name: '移至顶级' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: '顶级' }))
     expect(onMove).toHaveBeenCalledWith(null)
-    await userEvent.click(screen.getByRole('menuitem', { name: /移至「B」/ }))
+    await userEvent.click(screen.getByRole('menuitem', { name: /「B」/ }))
     expect(onMove).toHaveBeenCalledWith('b')
   })
 })

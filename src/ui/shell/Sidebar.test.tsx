@@ -155,7 +155,7 @@ describe('Sidebar', () => {
     const b = await app.createCategory({ name: 'B' })
     renderSidebar()
     await userEvent.click(screen.getByRole('button', { name: '移动「B」' }))
-    await userEvent.click(screen.getByRole('menuitem', { name: '移至「A」' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: '「A」' }))
     expect(app.store.getState().categories.find((c) => c.id === b)?.parentId).toBe(a)
   })
 
