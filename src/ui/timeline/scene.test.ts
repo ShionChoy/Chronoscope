@@ -95,6 +95,20 @@ describe('buildScene', () => {
     })
     expect(s.detail.glyphs[0].whiskers.length).toBe(2)
   })
+
+  it('colors a glyph by its category', () => {
+    const scene = buildScene({
+      ...base,
+      categoryColors: new Map([['c1', '#abcdef']]),
+      events: [ev({ id: 'p', start: y(2050), categoryId: 'c1' })],
+    })
+    expect(scene.detail.glyphs[0].color).toBe('#abcdef')
+  })
+
+  it('leaves an uncategorized glyph color undefined', () => {
+    const scene = buildScene({ ...base, events: [ev({ id: 'p', start: y(2050) })] })
+    expect(scene.detail.glyphs[0].color).toBeUndefined()
+  })
 })
 
 describe('aggregateMarkers', () => {

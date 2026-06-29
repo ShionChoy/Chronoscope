@@ -24,6 +24,7 @@ export interface SceneGlyph {
   whiskers: { lo: number; hi: number }[]
   row: number
   selected: boolean
+  color?: string
   title: string
 }
 
@@ -53,6 +54,9 @@ export interface BuildSceneInput {
   nowYear: number
   width: number
   selectedId: Id | null
+  // live category id → color; a glyph's color is its event's category color
+  // (undefined when the event is uncategorized or the category is missing).
+  categoryColors?: Map<Id, string>
 }
 
 const LABEL_GAP = 80
@@ -92,6 +96,7 @@ function rangeLabel(year: number, nowYear: number): string {
 
 export function buildScene(input: BuildSceneInput): TimelineScene {
   const { events, view, overview, nowYear, width, selectedId } = input
+  const categoryColors = input.categoryColors ?? new Map<Id, string>()
   const xOf = (year: number) => projectLinear(year, view) * width
 
   const ticks: SceneTick[] = generateTicks(view)
@@ -129,6 +134,7 @@ export function buildScene(input: BuildSceneInput): TimelineScene {
     const left = Math.min(xStart, wlo)
     const right = Math.max(xEnd, whi)
     if (right < 0 || left > width) continue
+    const color = e.categoryId != null ? categoryColors.get(e.categoryId) : undefined
     raws.push({
       eventId: e.id,
       kind,
@@ -136,6 +142,7 @@ export function buildScene(input: BuildSceneInput): TimelineScene {
       xEnd,
       whiskers,
       selected: e.id === selectedId,
+      color,
       title: e.title,
       left,
       right: right + LABEL_GAP,
@@ -151,6 +158,7 @@ export function buildScene(input: BuildSceneInput): TimelineScene {
     whiskers: p.whiskers,
     row: p.row,
     selected: p.selected,
+    color: p.color,
     title: p.title,
   }))
   const rowCount = glyphs.reduce((m, g) => Math.max(m, g.row + 1), 0)
