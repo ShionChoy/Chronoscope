@@ -28,4 +28,10 @@ describe('ColorPicker', () => {
     expect(onAddCustom).toHaveBeenCalledWith('#abcdef')
     expect(onPick).toHaveBeenCalledWith('#abcdef')
   })
+
+  it('marks the swatch matching value as selected (case-insensitive)', () => {
+    render(<ColorPicker value="#ABCDEF" presets={['#abcdef', '#123456']} custom={[]} onPick={vi.fn()} onAddCustom={vi.fn()} />)
+    expect(screen.getByLabelText('颜色 #abcdef').className).toContain('selected')
+    expect(screen.getByLabelText('颜色 #123456').className).not.toContain('selected')
+  })
 })
