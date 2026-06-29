@@ -38,6 +38,8 @@ export interface AppStore {
   deleteTag(id: Id): Promise<void>
   setFilter(patch: Partial<Filter>): void
   select(id: Id | null): void
+  toggleChecked(id: Id): void
+  setChecked(ids: Id[]): void
   setView(view: View): void
   setSort(sort: Sort): void
   setTheme(theme: Theme): void
@@ -198,16 +200,28 @@ export function createAppStore(deps: AppStoreDeps): AppStore {
     },
 
     setFilter(patch) {
-      store.setState((s) => ({ ...s, filter: { ...s.filter, ...patch } }))
+      store.setState((s) => ({ ...s, filter: { ...s.filter, ...patch }, checkedIds: [] }))
     },
     select(id) {
       store.setState((s) => ({ ...s, selectedId: id }))
+    },
+    toggleChecked(id) {
+      store.setState((s) => ({
+        ...s,
+        checkedIds: s.checkedIds.includes(id)
+          ? s.checkedIds.filter((x) => x !== id)
+          : [...s.checkedIds, id],
+      }))
+    },
+    setChecked(ids) {
+      store.setState((s) => ({ ...s, checkedIds: ids }))
     },
     setView(view) {
       // Selection is per-view: clearing it on a view switch keeps a row
       // selected in the list from popping the timeline's detail card (and
       // vice-versa) for something the user never picked in the new view.
-      store.setState((s) => ({ ...s, view, selectedId: null }))
+      // The batch (checkbox) selection is list-only, so it clears too.
+      store.setState((s) => ({ ...s, view, selectedId: null, checkedIds: [] }))
     },
     setSort(sort) {
       store.setState((s) => ({ ...s, sort }))

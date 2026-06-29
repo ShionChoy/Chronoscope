@@ -35,6 +35,9 @@ export interface AppState {
   // data bounds". Ephemeral session state: not persisted, not exported.
   timelineView: LinearView | null
   timelineOverview: LinearView | null
+  // 列表视图中被勾选的事件(当作集合用,去重)。临时会话态:不持久化、
+  // 不导出;与 selectedId(打开编辑器的单选)完全独立。
+  checkedIds: Id[]
   loaded: boolean
 }
 
@@ -51,6 +54,7 @@ export function initialAppState(nowYear: number, theme: Theme): AppState {
     nowYear,
     timelineView: null,
     timelineOverview: null,
+    checkedIds: [],
     loaded: false,
   }
 }

@@ -175,4 +175,39 @@ describe('appStore', () => {
     await app.moveCategory(a, b) // would make A a child of its own descendant
     expect(app.store.getState().categories.find((c) => c.id === a)?.parentId).toBeNull()
   })
+
+  it('toggleChecked adds then removes an id', () => {
+    app.toggleChecked('id1')
+    expect(app.store.getState().checkedIds).toEqual(['id1'])
+    app.toggleChecked('id2')
+    expect(app.store.getState().checkedIds).toEqual(['id1', 'id2'])
+    app.toggleChecked('id1')
+    expect(app.store.getState().checkedIds).toEqual(['id2'])
+  })
+
+  it('setChecked replaces the whole selection', () => {
+    app.toggleChecked('id1')
+    app.setChecked(['a', 'b'])
+    expect(app.store.getState().checkedIds).toEqual(['a', 'b'])
+    app.setChecked([])
+    expect(app.store.getState().checkedIds).toEqual([])
+  })
+
+  it('setView and setFilter clear the checked selection; select does not', () => {
+    app.setChecked(['id1'])
+    app.setView('timeline')
+    expect(app.store.getState().checkedIds).toEqual([])
+
+    app.setChecked(['id1'])
+    app.setFilter({ query: 'x' })
+    expect(app.store.getState().checkedIds).toEqual([])
+
+    app.setChecked(['id1'])
+    app.select('id1')
+    expect(app.store.getState().checkedIds).toEqual(['id1'])
+  })
+
+  it('initial checkedIds is empty', () => {
+    expect(app.store.getState().checkedIds).toEqual([])
+  })
 })
