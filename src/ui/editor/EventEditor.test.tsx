@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { EventEditor } from './EventEditor'
 import { AppStoreProvider, createAppStore, type AppStore } from '../../state'
@@ -91,5 +91,15 @@ describe('EventEditor', () => {
     const e = app.store.getState().events.find((ev) => ev.title === '地球形成')!
     expect(e.start?.fuzz).toEqual({ before: 5, after: 5 })
     expect(closed).toBe(true)
+  })
+
+  it('creates a category under a chosen parent', async () => {
+    const parent = await app.createCategory({ name: '历史' })
+    renderEditor(null)
+    await userEvent.type(screen.getByLabelText('新建分类'), '近代')
+    await userEvent.selectOptions(screen.getByLabelText('父分类'), parent)
+    const addRow = screen.getByLabelText('新建分类').closest('.add-row') as HTMLElement
+    await userEvent.click(within(addRow).getByRole('button', { name: '添加' }))
+    expect(app.store.getState().categories.find((c) => c.name === '近代')?.parentId).toBe(parent)
   })
 })

@@ -5,6 +5,8 @@ import { validateEvent } from '../../domain/model'
 import { withFuzz, type TimePoint } from '../../domain/time'
 import type { Id } from '../../domain/model'
 import { FuzzInput, type FuzzValue } from './FuzzInput'
+import { flattenCategoryTree } from '../../state'
+import { nextPresetColor } from '../categoryColors'
 
 export interface EventEditorProps {
   editingId: Id | null
@@ -27,6 +29,7 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
   const [endFuzz, setEndFuzz] = useState<FuzzValue | undefined>(existing?.end?.fuzz)
   const [errors, setErrors] = useState<string[]>([])
   const [newCatName, setNewCatName] = useState('')
+  const [newCatParent, setNewCatParent] = useState<Id | ''>('')
   const [newTagName, setNewTagName] = useState('')
 
   const liveCategories = state.categories.filter((c) => !c.deleted)
@@ -42,9 +45,14 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
   const addCategory = async () => {
     const name = newCatName.trim()
     if (!name) return
-    const id = await app.createCategory({ name })
+    const id = await app.createCategory({
+      name,
+      parentId: newCatParent || null,
+      color: nextPresetColor(liveCategories.length),
+    })
     setCategoryId(id)
     setNewCatName('')
+    setNewCatParent('')
   }
   const addTag = async () => {
     const name = newTagName.trim()
@@ -121,6 +129,14 @@ export function EventEditor({ editingId, onClose }: EventEditorProps) {
           onChange={(e) => setNewCatName(e.target.value)}
           placeholder="新建分类"
         />
+        <select aria-label="父分类" value={newCatParent} onChange={(e) => setNewCatParent(e.target.value as Id | '')}>
+          <option value="">顶级</option>
+          {flattenCategoryTree(state.categories).map((t) => (
+            <option key={t.category.id} value={t.category.id}>
+              {'　'.repeat(t.depth) + t.category.name}
+            </option>
+          ))}
+        </select>
         <button type="button" onClick={addCategory}>
           添加
         </button>
