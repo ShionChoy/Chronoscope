@@ -21,8 +21,7 @@ export interface SceneGlyph {
   kind: 'point' | 'span'
   xStart: number
   xEnd: number
-  whiskerStart: number
-  whiskerEnd: number
+  whiskers: { lo: number; hi: number }[]
   row: number
   selected: boolean
   title: string
@@ -106,33 +105,36 @@ export function buildScene(input: BuildSceneInput): TimelineScene {
     let kind: 'point' | 'span'
     let xStart: number
     let xEnd: number
-    let whiskerStart: number
-    let whiskerEnd: number
+    let whiskers: { lo: number; hi: number }[]
     if (e.start && e.end) {
       kind = 'span'
       xStart = xOf(instantOf(e.start))
       xEnd = xOf(instantOf(e.end))
-      whiskerStart = xOf(fuzzRangeOf(e.start).earliest)
-      whiskerEnd = xOf(fuzzRangeOf(e.end).latest)
+      whiskers = []
+      const rs = fuzzRangeOf(e.start)
+      if (rs.latest > rs.earliest) whiskers.push({ lo: xOf(rs.earliest), hi: xOf(rs.latest) })
+      const re = fuzzRangeOf(e.end)
+      if (re.latest > re.earliest) whiskers.push({ lo: xOf(re.earliest), hi: xOf(re.latest) })
     } else {
       kind = 'point'
       const tp = (e.start ?? e.end)!
       xStart = xOf(instantOf(tp))
       xEnd = xStart
-      const s = fuzzRangeOf(tp)
-      whiskerStart = xOf(s.earliest)
-      whiskerEnd = xOf(s.latest)
+      whiskers = []
+      const r = fuzzRangeOf(tp)
+      if (r.latest > r.earliest) whiskers.push({ lo: xOf(r.earliest), hi: xOf(r.latest) })
     }
-    const left = Math.min(xStart, whiskerStart)
-    const right = Math.max(xEnd, whiskerEnd)
+    const wlo = whiskers.length ? Math.min(...whiskers.map((w) => w.lo)) : xStart
+    const whi = whiskers.length ? Math.max(...whiskers.map((w) => w.hi)) : xEnd
+    const left = Math.min(xStart, wlo)
+    const right = Math.max(xEnd, whi)
     if (right < 0 || left > width) continue
     raws.push({
       eventId: e.id,
       kind,
       xStart,
       xEnd,
-      whiskerStart,
-      whiskerEnd,
+      whiskers,
       selected: e.id === selectedId,
       title: e.title,
       left,
@@ -146,8 +148,7 @@ export function buildScene(input: BuildSceneInput): TimelineScene {
     kind: p.kind,
     xStart: p.xStart,
     xEnd: p.xEnd,
-    whiskerStart: p.whiskerStart,
-    whiskerEnd: p.whiskerEnd,
+    whiskers: p.whiskers,
     row: p.row,
     selected: p.selected,
     title: p.title,

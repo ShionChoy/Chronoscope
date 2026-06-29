@@ -48,8 +48,8 @@ const scene: TimelineScene = {
   detail: {
     ticks: [{ x: 100, label: '2000年' }, { x: 500, label: '2050年' }],
     glyphs: [
-      { eventId: 'a', kind: 'span', xStart: 100, xEnd: 300, whiskerStart: 100, whiskerEnd: 300, row: 0, selected: false, title: 'A' },
-      { eventId: 'b', kind: 'point', xStart: 500, xEnd: 500, whiskerStart: 480, whiskerEnd: 520, row: 1, selected: true, title: 'B' },
+      { eventId: 'a', kind: 'span', xStart: 100, xEnd: 300, whiskers: [{ lo: 80, hi: 120 }, { lo: 280, hi: 320 }], row: 0, selected: false, title: 'A' },
+      { eventId: 'b', kind: 'point', xStart: 500, xEnd: 500, whiskers: [{ lo: 480, hi: 520 }], row: 1, selected: true, title: 'B' },
     ],
     rowCount: 2,
   },
@@ -107,5 +107,14 @@ describe('renderer', () => {
     // markers sit at x=100 and x=900 over width 1000 → depth 0.1 and 0.9
     expect(ctx.styles).toContain(mixHex(COLORS.deepTime, COLORS.now, 0.1))
     expect(ctx.styles).toContain(mixHex(COLORS.deepTime, COLORS.now, 0.9))
+  })
+  it('draws more line segments when endpoints have fuzz (error-bar caps)', () => {
+    const withW = fakeCtx()
+    drawScene(withW, scene, COLORS, computeLayout(400))
+    const bare = { ...scene, detail: { ...scene.detail, glyphs: scene.detail.glyphs.map((g) => ({ ...g, whiskers: [] })) } }
+    const withoutW = fakeCtx()
+    drawScene(withoutW, bare, COLORS, computeLayout(400))
+    const lineTos = (c: ReturnType<typeof fakeCtx>) => c.calls.filter((x) => x.startsWith('lineTo(')).length
+    expect(lineTos(withW)).toBeGreaterThan(lineTos(withoutW))
   })
 })

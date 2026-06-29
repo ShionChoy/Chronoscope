@@ -80,14 +80,18 @@ export function drawScene(
   for (const g of scene.detail.glyphs) {
     const y = layout.glyphTop + g.row * layout.rowHeight
     const color = g.selected ? colors.now : colors.accent
-    // fuzzy whisker
-    if (g.whiskerEnd > g.whiskerStart) {
-      ctx.strokeStyle = colors.muted
+
+    // fuzzy whiskers — horizontal lines first (the core will sit on top)
+    ctx.strokeStyle = colors.muted
+    for (const w of g.whiskers) {
+      if (w.hi <= w.lo) continue
       ctx.beginPath()
-      ctx.moveTo(g.whiskerStart, y + 4)
-      ctx.lineTo(g.whiskerEnd, y + 4)
+      ctx.moveTo(w.lo, y + 4)
+      ctx.lineTo(w.hi, y + 4)
       ctx.stroke()
     }
+
+    // core glyph
     ctx.fillStyle = color
     if (g.kind === 'span') {
       ctx.fillRect(g.xStart, y, Math.max(2, g.xEnd - g.xStart), 8)
@@ -96,6 +100,20 @@ export function drawScene(
       ctx.arc(g.xStart, y + 4, 4, 0, Math.PI * 2)
       ctx.fill()
     }
+
+    // end caps on top of the core, so inner caps stay visible (taller than the bar)
+    ctx.strokeStyle = colors.muted
+    for (const w of g.whiskers) {
+      if (w.hi <= w.lo) continue
+      ctx.beginPath()
+      ctx.moveTo(w.lo, y - 3)
+      ctx.lineTo(w.lo, y + 11)
+      ctx.moveTo(w.hi, y - 3)
+      ctx.lineTo(w.hi, y + 11)
+      ctx.stroke()
+    }
+
+    // title
     ctx.fillStyle = colors.text
     ctx.fillText(g.title, g.xEnd + 6, y + 8)
   }

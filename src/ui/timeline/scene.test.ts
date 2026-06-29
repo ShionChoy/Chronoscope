@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { buildScene, eventInstant, aggregateMarkers } from './scene'
 import { ev, y } from '../../test/fixtures'
+import { withFuzz } from '../../domain/time'
 
 const base = { view: { min: 2000, max: 2100 }, overview: { min: 2000, max: 2100 }, nowYear: 2026, width: 1000, selectedId: null }
 
@@ -79,6 +80,13 @@ describe('buildScene', () => {
       expect(t.x).toBeLessThanOrEqual(base.width)
       expect(typeof t.label).toBe('string')
     }
+  })
+  it('emits a whisker segment for a fuzzy endpoint and none for a crisp one', () => {
+    const crisp = buildScene({ ...base, events: [ev({ id: 'p', start: y(2050) })] })
+    expect(crisp.detail.glyphs[0].whiskers).toEqual([])
+    const s = buildScene({ ...base, events: [ev({ id: 'q', start: withFuzz(y(2050), { before: 5, after: 5 }) })] })
+    expect(s.detail.glyphs[0].whiskers.length).toBe(1)
+    expect(s.detail.glyphs[0].whiskers[0].hi).toBeGreaterThan(s.detail.glyphs[0].whiskers[0].lo)
   })
 })
 
