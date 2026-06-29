@@ -1,0 +1,121 @@
+// @vitest-environment jsdom
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { BatchBar } from './BatchBar'
+import { AppStoreProvider, createAppStore, type AppStore } from '../../state'
+import { createMemoryRepository, type Database, type Clock } from '../../data'
+import type { EventRecord, Category, Tag } from '../../domain/model'
+
+function makeApp(): AppStore {
+  const db: Database = {
+    events: createMemoryRepository<EventRecord>(),
+    categories: createMemoryRepository<Category>(),
+    tags: createMemoryRepository<Tag>(),
+  }
+  let t = 0
+  let i = 0
+  const clock: Clock = { now: () => `t${++t}` }
+  return createAppStore({ db, clock, nowYear: 2026, theme: 'day', genId: () => `id${++i}` })
+}
+
+let app: AppStore
+beforeEach(() => {
+  app = makeApp()
+})
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+const renderBar = () =>
+  render(
+    <AppStoreProvider value={app}>
+      <BatchBar />
+    </AppStoreProvider>,
+  )
+
+describe('BatchBar', () => {
+  it('renders nothing when nothing is checked', () => {
+    const { container } = renderBar()
+    expect(container.firstChild).toBeNull()
+  })
+
+  it('shows the selected count when items are checked', async () => {
+    await app.createEvent({ title: 'a' })
+    await app.createEvent({ title: 'b' })
+    app.setChecked(['id1', 'id2'])
+    renderBar()
+    expect(screen.getByText('已选 2 项')).toBeTruthy()
+  })
+
+  it('moves checked events to a folder via the menu', async () => {
+    const c = await app.createCategory({ name: '科技' })
+    await app.createEvent({ title: 'a' })
+    app.setChecked(['id2'])
+    renderBar()
+    await userEvent.click(screen.getByRole('button', { name: '移动到文件夹 ▾' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: '「科技」' }))
+    expect(app.store.getState().events.find((e) => e.id === 'id2')?.categoryId).toBe(c)
+  })
+
+  it('clears the category via the menu top item (未分类)', async () => {
+    const c = await app.createCategory({ name: '科技' })
+    await app.createEvent({ title: 'a', categoryId: c })
+    app.setChecked(['id2'])
+    renderBar()
+    await userEvent.click(screen.getByRole('button', { name: '移动到文件夹 ▾' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: '未分类' }))
+    expect(app.store.getState().events.find((e) => e.id === 'id2')?.categoryId).toBeNull()
+  })
+
+  it('adds a tag to checked events', async () => {
+    const t = await app.createTag({ name: '里程碑' })
+    await app.createEvent({ title: 'a' })
+    app.setChecked(['id2'])
+    renderBar()
+    await userEvent.click(screen.getByRole('button', { name: '添加标签 ▾' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: '里程碑' }))
+    expect(app.store.getState().events.find((e) => e.id === 'id2')?.tagIds).toEqual([t])
+  })
+
+  it('remove-tag menu lists only tags present on the selection', async () => {
+    const onSel = await app.createTag({ name: '在选中上' })
+    await app.createTag({ name: '不在选中上' })
+    await app.createEvent({ title: 'a', tagIds: [onSel] })
+    app.setChecked(['id3'])
+    renderBar()
+    await userEvent.click(screen.getByRole('button', { name: '移除标签 ▾' }))
+    expect(screen.getByRole('menuitem', { name: '在选中上' })).toBeTruthy()
+    expect(screen.queryByRole('menuitem', { name: '不在选中上' })).toBeNull()
+    await userEvent.click(screen.getByRole('menuitem', { name: '在选中上' }))
+    expect(app.store.getState().events.find((e) => e.id === 'id3')?.tagIds).toEqual([])
+  })
+
+  it('deletes checked events after confirmation and clears the selection', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    await app.createEvent({ title: 'a' })
+    await app.createEvent({ title: 'b' })
+    app.setChecked(['id1', 'id2'])
+    renderBar()
+    await userEvent.click(screen.getByRole('button', { name: '删除' }))
+    expect(app.store.getState().events.find((e) => e.id === 'id1')?.deleted).toBe(true)
+    expect(app.store.getState().checkedIds).toEqual([])
+  })
+
+  it('does not delete when confirmation is cancelled', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    await app.createEvent({ title: 'a' })
+    app.setChecked(['id1'])
+    renderBar()
+    await userEvent.click(screen.getByRole('button', { name: '删除' }))
+    expect(app.store.getState().events.find((e) => e.id === 'id1')?.deleted).toBe(false)
+  })
+
+  it('取消 clears the selection', async () => {
+    await app.createEvent({ title: 'a' })
+    app.setChecked(['id1'])
+    renderBar()
+    await userEvent.click(screen.getByRole('button', { name: '取消' }))
+    expect(app.store.getState().checkedIds).toEqual([])
+  })
+})

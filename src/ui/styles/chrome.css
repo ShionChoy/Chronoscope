@@ -495,3 +495,29 @@ legend {
 .fuzz-input .fuzz-label { color: var(--muted); }
 .fuzz-input input[type='number'] { width: 84px; }
 .fuzz-input .fuzz-asym { display: flex; align-items: center; gap: 4px; color: var(--muted); }
+
+/* ---------- list-view batch action bar ---------- */
+.batch-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.batch-bar .count { color: var(--muted); }
+.batch-bar .menu-anchor { position: relative; display: inline-flex; }
+/* drop the menus as popovers anchored under their trigger (override the
+   inline .move-menu margins it uses inside the sidebar) */
+.batch-bar .menu-anchor .move-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin: 4px 0 0;
+  z-index: 10;
+  min-width: 9em;
+}
+.tag-menu .empty { padding: 4px 6px; color: var(--muted); font-size: 13px; }
