@@ -34,7 +34,7 @@
       ],
       "links": [],
       "createdAt": "001780000000010-000000-seed",
-      "updatedAt": "001780000000011-000000-seed",
+      "updatedAt": "001999999990000-000000-seed",
       "deleted": false
     },
     {
@@ -42,14 +42,15 @@
       "title": "寒武纪大爆发",
       "start": {
         "year": -537997974,
-        "precision": "Ma"
+        "precision": "Ma",
+        "fuzz": { "before": 5000000, "after": 5000000 }
       },
       "note": "多细胞动物门类在地质瞬间集中出现。",
       "categoryId": "c-geo",
       "tagIds": [],
       "links": [],
       "createdAt": "001780000000012-000000-seed",
-      "updatedAt": "001780000000013-000000-seed",
+      "updatedAt": "001999999990001-000000-seed",
       "deleted": false
     },
     {
@@ -67,7 +68,7 @@
       ],
       "links": [],
       "createdAt": "001780000000014-000000-seed",
-      "updatedAt": "001780000000015-000000-seed",
+      "updatedAt": "001999999990002-000000-seed",
       "deleted": false
     },
     {
@@ -75,14 +76,15 @@
       "title": "末次冰盛期",
       "start": {
         "year": -17974,
-        "precision": "ka"
+        "precision": "ka",
+        "fuzz": { "before": 2000, "after": 2000 }
       },
       "note": "冰川覆盖达到最大范围,约 2 万年前。",
       "categoryId": "c-cosmos",
       "tagIds": [],
       "links": [],
       "createdAt": "001780000000016-000000-seed",
-      "updatedAt": "001780000000017-000000-seed",
+      "updatedAt": "001999999990003-000000-seed",
       "deleted": false
     },
     {
@@ -90,14 +92,15 @@
       "title": "美索不达米亚早期文明",
       "start": {
         "year": -2999,
-        "precision": "millennium"
+        "precision": "millennium",
+        "fuzz": { "before": 300, "after": 300 }
       },
       "note": "苏美尔城邦兴起(千年纪精度)。",
       "categoryId": "c-history",
       "tagIds": [],
       "links": [],
       "createdAt": "001780000000018-000000-seed",
-      "updatedAt": "001780000000019-000000-seed",
+      "updatedAt": "001999999990004-000000-seed",
       "deleted": false
     },
     {
@@ -122,14 +125,15 @@
       "title": "古希腊古典时代",
       "start": {
         "year": -450,
-        "precision": "century"
+        "precision": "century",
+        "fuzz": { "before": 50, "after": 50 }
       },
       "note": "公元前 5 世纪,城邦文明的高峰(世纪精度)。",
       "categoryId": "c-history",
       "tagIds": [],
       "links": [],
       "createdAt": "001780000000022-000000-seed",
-      "updatedAt": "001780000000023-000000-seed",
+      "updatedAt": "001999999990005-000000-seed",
       "deleted": false
     },
     {
@@ -137,14 +141,15 @@
       "title": "罗马建城",
       "start": {
         "year": -752,
-        "precision": "year"
+        "precision": "year",
+        "fuzz": { "before": 50, "after": 50 }
       },
       "note": "传说中由罗慕路斯建立,公元前 753 年。",
       "categoryId": "c-history",
       "tagIds": [],
       "links": [],
       "createdAt": "001780000000024-000000-seed",
-      "updatedAt": "001780000000025-000000-seed",
+      "updatedAt": "001999999990006-000000-seed",
       "deleted": false
     },
     {
@@ -182,7 +187,7 @@
       ],
       "links": [],
       "createdAt": "001780000000028-000000-seed",
-      "updatedAt": "001780000000029-000000-seed",
+      "updatedAt": "001999999990007-000000-seed",
       "deleted": false
     },
     {
