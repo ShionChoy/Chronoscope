@@ -132,6 +132,15 @@ describe('Sidebar', () => {
     expect(app.store.getState().categories.find((c) => c.id === b)?.parentId).toBe(a)
   })
 
+  it('keeps the "移动" placeholder out of the choosable target list', async () => {
+    await app.createCategory({ name: 'A' })
+    renderSidebar()
+    const sel = screen.getByLabelText('移动「A」')
+    const placeholder = sel.querySelector('option[value=""]') as HTMLOptionElement
+    expect(placeholder.disabled).toBe(true)
+    expect(placeholder.hidden).toBe(true)
+  })
+
   it('sets a category color from the picker dot', async () => {
     const a = await app.createCategory({ name: 'A', color: '#000000' })
     renderSidebar()

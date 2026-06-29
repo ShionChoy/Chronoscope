@@ -90,7 +90,11 @@ function CategoryTree({
                   e.target.value = ''
                 }}
               >
-                <option value="">移动</option>
+                {/* placeholder: the collapsed-state label only — `disabled hidden`
+                    keeps it out of the open list, which shows just real targets */}
+                <option value="" disabled hidden>
+                  移动
+                </option>
                 <option value="__root__">顶级</option>
                 {targets.map((t) => (
                   <option key={t.category.id} value={t.category.id}>
