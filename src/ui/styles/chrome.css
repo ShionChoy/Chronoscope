@@ -521,3 +521,5 @@ legend {
   min-width: 9em;
 }
 .tag-menu .empty { padding: 4px 6px; color: var(--muted); font-size: 13px; }
+.list-view .col-check { width: 1%; text-align: center; }
+.list-view td.col-check, .list-view th.col-check { padding-left: 10px; padding-right: 6px; }

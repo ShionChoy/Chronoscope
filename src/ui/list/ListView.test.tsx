@@ -69,4 +69,31 @@ describe('ListView', () => {
     expect(screen.getByText('坏点')).toBeTruthy()
     expect(screen.getByText('2026年')).toBeTruthy() // year fallback
   })
+
+  it('checking a row updates checkedIds without opening the editor', async () => {
+    await app.createEvent({ title: 'x', start: { year: 1, precision: 'year' } })
+    const onEdit = vi.fn()
+    renderList(onEdit)
+    await userEvent.click(screen.getByLabelText('选择「x」'))
+    expect(app.store.getState().checkedIds).toEqual(['id1'])
+    expect(onEdit).not.toHaveBeenCalled()
+  })
+
+  it('select-all checks every visible row; clicking again clears them', async () => {
+    await app.createEvent({ title: 'a', start: { year: 1, precision: 'year' } })
+    await app.createEvent({ title: 'b', start: { year: 2, precision: 'year' } })
+    renderList()
+    await userEvent.click(screen.getByLabelText('全选'))
+    expect(app.store.getState().checkedIds.sort()).toEqual(['id1', 'id2'])
+    await userEvent.click(screen.getByLabelText('全选'))
+    expect(app.store.getState().checkedIds).toEqual([])
+  })
+
+  it('shows the BatchBar only when something is checked', async () => {
+    await app.createEvent({ title: 'x', start: { year: 1, precision: 'year' } })
+    renderList()
+    expect(screen.queryByText(/已选/)).toBeNull()
+    await userEvent.click(screen.getByLabelText('选择「x」'))
+    expect(screen.getByText('已选 1 项')).toBeTruthy()
+  })
 })
