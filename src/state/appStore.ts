@@ -29,6 +29,10 @@ export interface AppStore {
   createEvent(fields: NewEventFields): Promise<Id>
   updateEvent(id: Id, changes: Partial<EventRecord>): Promise<void>
   deleteEvent(id: Id): Promise<void>
+  deleteEvents(ids: Id[]): Promise<void>
+  setEventsCategory(ids: Id[], categoryId: Id | null): Promise<void>
+  addTagToEvents(ids: Id[], tagId: Id): Promise<void>
+  removeTagFromEvents(ids: Id[], tagId: Id): Promise<void>
   createCategory(fields: { name: string; parentId?: Id | null; color?: string; order?: number }): Promise<Id>
   updateCategory(id: Id, changes: Partial<Category>): Promise<void>
   deleteCategory(id: Id): Promise<void>
@@ -72,6 +76,18 @@ export function createAppStore(deps: AppStoreDeps): AppStore {
     store.setState((s) => ({ ...s, events, categories, tags, loaded: true }))
   }
 
+  // shared tail for the non-deleting batch mutators: persist each changed
+  // record, then upsert them all in one setState. No-op when nothing changed.
+  async function commitEvents(changed: EventRecord[]): Promise<void> {
+    if (changed.length === 0) return
+    for (const e of changed) await db.events.put(e)
+    store.setState((st) => {
+      let evs = st.events
+      for (const e of changed) evs = upsert(evs, e)
+      return { ...st, events: evs }
+    })
+  }
+
   return {
     store,
     load,
@@ -101,6 +117,53 @@ export function createAppStore(deps: AppStoreDeps): AppStore {
         events: upsert(s.events, next),
         selectedId: s.selectedId === id ? null : s.selectedId,
       }))
+    },
+
+    async deleteEvents(ids) {
+      const idSet = new Set(ids)
+      const changed = store
+        .getState()
+        .events.filter((e) => !e.deleted && idSet.has(e.id))
+        .map((e) => softDelete(e, clock))
+      for (const e of changed) await db.events.put(e)
+      store.setState((st) => {
+        let evs = st.events
+        for (const e of changed) evs = upsert(evs, e)
+        const gone = new Set(changed.map((e) => e.id))
+        return {
+          ...st,
+          events: evs,
+          checkedIds: [], // the selection was just consumed
+          selectedId: st.selectedId != null && gone.has(st.selectedId) ? null : st.selectedId,
+        }
+      })
+    },
+
+    async setEventsCategory(ids, categoryId) {
+      const idSet = new Set(ids)
+      const changed = store
+        .getState()
+        .events.filter((e) => !e.deleted && idSet.has(e.id) && e.categoryId !== categoryId)
+        .map((e) => touch(e, { categoryId }, clock))
+      await commitEvents(changed)
+    },
+
+    async addTagToEvents(ids, tagId) {
+      const idSet = new Set(ids)
+      const changed = store
+        .getState()
+        .events.filter((e) => !e.deleted && idSet.has(e.id) && !e.tagIds.includes(tagId))
+        .map((e) => touch(e, { tagIds: [...e.tagIds, tagId] }, clock))
+      await commitEvents(changed)
+    },
+
+    async removeTagFromEvents(ids, tagId) {
+      const idSet = new Set(ids)
+      const changed = store
+        .getState()
+        .events.filter((e) => !e.deleted && idSet.has(e.id) && e.tagIds.includes(tagId))
+        .map((e) => touch(e, { tagIds: e.tagIds.filter((t) => t !== tagId) }, clock))
+      await commitEvents(changed)
     },
 
     async createCategory(fields) {

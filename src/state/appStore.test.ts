@@ -210,4 +210,56 @@ describe('appStore', () => {
   it('initial checkedIds is empty', () => {
     expect(app.store.getState().checkedIds).toEqual([])
   })
+
+  it('deleteEvents tombstones all given events, clears selection and checkedIds', async () => {
+    await app.createEvent({ title: 'a' }) // id1
+    await app.createEvent({ title: 'b' }) // id2
+    await app.createEvent({ title: 'c' }) // id3
+    app.select('id2')
+    app.setChecked(['id1', 'id2'])
+    await app.deleteEvents(['id1', 'id2'])
+    expect((await db.events.get('id1'))?.deleted).toBe(true)
+    expect((await db.events.get('id2'))?.deleted).toBe(true)
+    expect((await db.events.get('id3'))?.deleted).toBe(false)
+    expect(app.store.getState().checkedIds).toEqual([])
+    expect(app.store.getState().selectedId).toBeNull()
+  })
+
+  it('setEventsCategory sets the category (null = uncategorized) and keeps checkedIds', async () => {
+    await app.createEvent({ title: 'a' }) // id1
+    await app.createEvent({ title: 'b' }) // id2
+    app.setChecked(['id1', 'id2'])
+    await app.setEventsCategory(['id1', 'id2'], 'cat9')
+    expect((await db.events.get('id1'))?.categoryId).toBe('cat9')
+    expect((await db.events.get('id2'))?.categoryId).toBe('cat9')
+    expect(app.store.getState().checkedIds).toEqual(['id1', 'id2'])
+    await app.setEventsCategory(['id1'], null)
+    expect((await db.events.get('id1'))?.categoryId).toBeNull()
+  })
+
+  it('addTagToEvents unions the tag without duplicating', async () => {
+    await app.createEvent({ title: 'a' }) // id1
+    await app.createEvent({ title: 'b' }) // id2
+    await app.addTagToEvents(['id1', 'id2'], 'tagX')
+    await app.addTagToEvents(['id1'], 'tagX') // already has it → no dup
+    expect((await db.events.get('id1'))?.tagIds).toEqual(['tagX'])
+    expect((await db.events.get('id2'))?.tagIds).toEqual(['tagX'])
+  })
+
+  it('removeTagFromEvents drops the tag where present', async () => {
+    await app.createEvent({ title: 'a' }) // id1
+    await app.addTagToEvents(['id1'], 'tagX')
+    await app.addTagToEvents(['id1'], 'tagY')
+    await app.removeTagFromEvents(['id1'], 'tagX')
+    expect((await db.events.get('id1'))?.tagIds).toEqual(['tagY'])
+  })
+
+  it('batch ops on empty ids are a no-op (no throw, no write)', async () => {
+    await app.createEvent({ title: 'a' }) // id1
+    await app.setEventsCategory([], 'cat9')
+    await app.addTagToEvents([], 'tagX')
+    await app.removeTagFromEvents([], 'tagX')
+    expect((await db.events.get('id1'))?.categoryId).toBeNull()
+    expect((await db.events.get('id1'))?.tagIds).toEqual([])
+  })
 })
