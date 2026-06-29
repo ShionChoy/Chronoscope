@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useLayoutEffect, useState } from 'react'
 import { AppStoreProvider, useAppStore, useAppState, applyTheme, persistTheme, type AppStore } from '../../state'
 import type { FileSync } from '../../data'
 import { TopBar } from './TopBar'
@@ -19,7 +19,12 @@ function ShellBody({ fileSync }: { fileSync?: FileSync }) {
   const trapRef = useFocusTrap<HTMLDivElement>(editor !== null, () => setEditor(null))
   const [drawerOpen, setDrawerOpen] = useState(false)
 
-  useEffect(() => {
+  // useLayoutEffect (not useEffect): the DOM `data-theme` must be set during the
+  // commit phase, before TimelineView's passive draw effect reads the CSS
+  // variables via getComputedStyle. With a passive effect here the canvas
+  // repaints with the old theme's colors and only catches up on the next
+  // interaction.
+  useLayoutEffect(() => {
     applyTheme(document.documentElement, state.theme)
     persistTheme(window.localStorage, state.theme)
   }, [state.theme])
