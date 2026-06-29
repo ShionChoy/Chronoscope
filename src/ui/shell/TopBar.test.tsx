@@ -57,4 +57,14 @@ describe('TopBar', () => {
     await userEvent.upload(screen.getByLabelText('导入'), file)
     expect(props.onImportFile).toHaveBeenCalledWith(file)
   })
+  it('opens and closes the overflow menu', async () => {
+    renderTopBar()
+    const toggle = screen.getByRole('button', { name: '更多' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    await userEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    // clicking an action inside the menu closes it again
+    await userEvent.click(screen.getByRole('button', { name: '导出' }))
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+  })
 })
