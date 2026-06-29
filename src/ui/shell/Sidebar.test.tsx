@@ -100,6 +100,14 @@ describe('Sidebar', () => {
     expect(app.store.getState().filter.categoryId).toBeNull()
   })
 
+  it('toggles the 未分类 filter off when clicked again', async () => {
+    renderSidebar()
+    await userEvent.click(screen.getByRole('button', { name: '未分类' }))
+    expect(app.store.getState().filter.uncategorized).toBe(true)
+    await userEvent.click(screen.getByRole('button', { name: '未分类' }))
+    expect(app.store.getState().filter.uncategorized).toBe(false)
+  })
+
   it('the 未分类 folder exposes no color, menu, or delete controls', async () => {
     renderSidebar()
     expect(screen.queryByRole('button', { name: '设置「未分类」颜色' })).toBeNull()

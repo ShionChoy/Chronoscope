@@ -194,8 +194,8 @@
 .sidebar .color-dot-spacer { flex: 0 0 auto; width: 14px; }
 
 /* "文件夹" header row with its ＋ add button */
-.section-head { display: flex; align-items: center; gap: 4px; }
-.section-head h2 { flex: 1; }
+.sidebar .section-head { display: flex; align-items: center; gap: 4px; }
+.sidebar .section-head h2 { flex: 1; }
 .sidebar .add-folder-btn,
 .sidebar .menu {
   flex: 0 0 auto;

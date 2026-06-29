@@ -328,7 +328,7 @@ export function Sidebar({ open = false }: { open?: boolean }) {
               <button
                 type="button"
                 className={state.filter.uncategorized ? 'name active' : 'name'}
-                onClick={() => app.setFilter({ categoryId: null, uncategorized: true })}
+                onClick={() => app.setFilter({ categoryId: null, uncategorized: !state.filter.uncategorized })}
               >
                 未分类
               </button>
