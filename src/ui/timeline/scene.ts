@@ -3,7 +3,7 @@ import {
   type LinearView,
   projectLinear,
   generateTicks,
-  spanOf,
+  fuzzRangeOf,
   instantOf,
   formatTimePoint,
   fromYear,
@@ -112,16 +112,16 @@ export function buildScene(input: BuildSceneInput): TimelineScene {
       kind = 'span'
       xStart = xOf(instantOf(e.start))
       xEnd = xOf(instantOf(e.end))
-      whiskerStart = xOf(spanOf(e.start).start)
-      whiskerEnd = xOf(spanOf(e.end).end)
+      whiskerStart = xOf(fuzzRangeOf(e.start).earliest)
+      whiskerEnd = xOf(fuzzRangeOf(e.end).latest)
     } else {
       kind = 'point'
       const tp = (e.start ?? e.end)!
       xStart = xOf(instantOf(tp))
       xEnd = xStart
-      const s = spanOf(tp)
-      whiskerStart = xOf(s.start)
-      whiskerEnd = xOf(s.end)
+      const s = fuzzRangeOf(tp)
+      whiskerStart = xOf(s.earliest)
+      whiskerEnd = xOf(s.latest)
     }
     const left = Math.min(xStart, whiskerStart)
     const right = Math.max(xEnd, whiskerEnd)

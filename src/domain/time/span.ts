@@ -1,13 +1,8 @@
-import { PRECISION_YEARS, type Precision } from './precision'
 import { type TimePoint, instantOf } from './timepoint'
 
-const APPROX: Precision[] = ['ka', 'Ma', 'Ga']
-
-export function spanOf(tp: TimePoint): { start: number; end: number } {
-  const unit = PRECISION_YEARS[tp.precision]
-  const base = instantOf(tp)
-  if (APPROX.includes(tp.precision)) {
-    return { start: base - unit / 2, end: base + unit / 2 }
-  }
-  return { start: base, end: base + unit }
+// The explicit uncertainty interval around a point: how far earlier/later the
+// instant could be, per the point's own `fuzz`. No fuzz → zero width.
+export function fuzzRangeOf(tp: TimePoint): { earliest: number; latest: number } {
+  const at = instantOf(tp)
+  return { earliest: at - (tp.fuzz?.before ?? 0), latest: at + (tp.fuzz?.after ?? 0) }
 }

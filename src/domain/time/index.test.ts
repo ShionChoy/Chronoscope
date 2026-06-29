@@ -7,7 +7,7 @@ describe('time barrel', () => {
     expect(typeof time.fromCivil).toBe('function')
     expect(typeof time.formatTimePoint).toBe('function')
     expect(typeof time.parseTimeInput).toBe('function')
-    expect(typeof time.spanOf).toBe('function')
+    expect(typeof time.fuzzRangeOf).toBe('function')
     expect(typeof time.projectLinear).toBe('function')
     expect(typeof time.projectLog).toBe('function')
     expect(typeof time.generateTicks).toBe('function')
