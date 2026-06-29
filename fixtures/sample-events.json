@@ -24,7 +24,8 @@
       "title": "地球形成",
       "start": {
         "year": -4539997974,
-        "precision": "Ga"
+        "precision": "Ga",
+        "fuzz": { "before": 200000000, "after": 200000000 }
       },
       "note": "由太阳星云吸积而成,约 *45.4 亿年* 前。",
       "categoryId": "c-geo",
@@ -165,11 +166,13 @@
       "title": "文艺复兴",
       "start": {
         "year": 1350,
-        "precision": "century"
+        "precision": "century",
+        "fuzz": { "before": 30, "after": 30 }
       },
       "end": {
         "year": 1650,
-        "precision": "century"
+        "precision": "century",
+        "fuzz": { "before": 20, "after": 50 }
       },
       "note": "从 *14 世纪* 到 *17 世纪* 的文化运动(跨世纪区间)。",
       "categoryId": "c-history",
