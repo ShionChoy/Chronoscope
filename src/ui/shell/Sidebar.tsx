@@ -12,6 +12,7 @@ import type { CategoryNode } from '../../state'
 import type { Category, Id } from '../../domain/model'
 import { CATEGORY_PRESETS, nextPresetColor, loadCustomColors, persistCustomColors, addToPalette } from '../categoryColors'
 import { ColorPicker } from './ColorPicker'
+import { MoveMenu } from './MoveMenu'
 
 function CategoryTree({
   nodes,
@@ -21,11 +22,13 @@ function CategoryTree({
   collapsed,
   custom,
   colorOpenFor,
+  menuOpenFor,
   onPick,
   onDelete,
   onToggle,
   onMove,
   onToggleColor,
+  onToggleMenu,
   onPickColor,
   onAddCustom,
 }: {
@@ -36,11 +39,13 @@ function CategoryTree({
   collapsed: Set<Id>
   custom: string[]
   colorOpenFor: Id | null
+  menuOpenFor: Id | null
   onPick: (id: Id) => void
   onDelete: (id: Id, name: string) => void
   onToggle: (id: Id) => void
   onMove: (id: Id, parentId: Id | null) => void
   onToggleColor: (id: Id) => void
+  onToggleMenu: (id: Id) => void
   onPickColor: (id: Id, hex: string) => void
   onAddCustom: (hex: string) => void
 }) {
@@ -75,33 +80,20 @@ function CategoryTree({
                 aria-label={`设置「${n.category.name}」颜色`}
                 onClick={() => onToggleColor(id)}
               />
-              <button type="button" className={selectedId === id ? 'active' : ''} onClick={() => onPick(id)}>
+              <button type="button" className={selectedId === id ? 'name active' : 'name'} onClick={() => onPick(id)}>
                 {n.category.name}
               </button>
               <span className="count">{counts.get(id) ?? 0}</span>
-              <select
-                className="move"
+              <button
+                type="button"
+                className="menu"
                 aria-label={`移动「${n.category.name}」`}
-                value=""
-                onChange={(e) => {
-                  const v = e.target.value
-                  if (v === '') return
-                  onMove(id, v === '__root__' ? null : (v as Id))
-                  e.target.value = ''
-                }}
+                aria-haspopup="true"
+                aria-expanded={menuOpenFor === id}
+                onClick={() => onToggleMenu(id)}
               >
-                {/* placeholder: the collapsed-state label only — `disabled hidden`
-                    keeps it out of the open list, which shows just real targets */}
-                <option value="" disabled hidden>
-                  移动
-                </option>
-                <option value="__root__">顶级</option>
-                {targets.map((t) => (
-                  <option key={t.category.id} value={t.category.id}>
-                    {'　'.repeat(t.depth) + t.category.name}
-                  </option>
-                ))}
-              </select>
+                ⋯
+              </button>
               <button
                 type="button"
                 className="del"
@@ -120,6 +112,7 @@ function CategoryTree({
                 onAddCustom={onAddCustom}
               />
             )}
+            {menuOpenFor === id && <MoveMenu targets={targets} onMove={(parentId) => onMove(id, parentId)} />}
             {hasChildren && !isCollapsed && (
               <CategoryTree
                 nodes={n.children}
@@ -129,11 +122,13 @@ function CategoryTree({
                 collapsed={collapsed}
                 custom={custom}
                 colorOpenFor={colorOpenFor}
+                menuOpenFor={menuOpenFor}
                 onPick={onPick}
                 onDelete={onDelete}
                 onToggle={onToggle}
                 onMove={onMove}
                 onToggleColor={onToggleColor}
+                onToggleMenu={onToggleMenu}
                 onPickColor={onPickColor}
                 onAddCustom={onAddCustom}
               />
@@ -151,18 +146,21 @@ export function Sidebar({ open = false }: { open?: boolean }) {
   const tree = buildCategoryTree(state.categories)
   const counts = categoryEventCounts(state)
   const liveEvents = state.events.filter((e) => !e.deleted)
-  const totalCount = liveEvents.length
   const uncategorizedCount = liveEvents.filter((e) => e.categoryId == null).length
   const liveCategories = state.categories.filter((c) => !c.deleted)
   const liveTags = state.tags.filter((t) => !t.deleted)
   const parentOptions = flattenCategoryTree(state.categories)
 
   const [collapsed, setCollapsed] = useState<Set<Id>>(new Set())
+  const [addOpen, setAddOpen] = useState(false)
   const [newCat, setNewCat] = useState('')
   const [newCatParent, setNewCatParent] = useState<Id | ''>('')
+  const [newCatColor, setNewCatColor] = useState<string>(CATEGORY_PRESETS[0])
+  const [addColorOpen, setAddColorOpen] = useState(false)
   const [newTag, setNewTag] = useState('')
   const [customColors, setCustomColors] = useState<string[]>(() => loadCustomColors(window.localStorage))
   const [colorOpenFor, setColorOpenFor] = useState<Id | null>(null)
+  const [menuOpenFor, setMenuOpenFor] = useState<Id | null>(null)
 
   useEffect(() => {
     persistCustomColors(window.localStorage, customColors)
@@ -184,12 +182,24 @@ export function Sidebar({ open = false }: { open?: boolean }) {
     app.setFilter({ tagIds: cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id] })
   }
 
-  const addCategory = async () => {
-    const name = newCat.trim()
-    if (!name) return
-    await app.createCategory({ name, parentId: newCatParent || null, color: nextPresetColor(liveCategories.length) })
+  const openAdd = () => {
     setNewCat('')
     setNewCatParent('')
+    setNewCatColor(nextPresetColor(liveCategories.length))
+    setAddColorOpen(false)
+    setAddOpen(true)
+  }
+  const closeAdd = () => {
+    setAddOpen(false)
+    setAddColorOpen(false)
+    setNewCat('')
+    setNewCatParent('')
+  }
+  const confirmAdd = async () => {
+    const name = newCat.trim()
+    if (!name) return
+    await app.createCategory({ name, parentId: newCatParent || null, color: newCatColor })
+    closeAdd()
   }
 
   const deleteCategory = (id: Id, name: string) => {
@@ -204,8 +214,18 @@ export function Sidebar({ open = false }: { open?: boolean }) {
     if (state.filter.categoryId != null && ids.has(state.filter.categoryId)) app.setFilter({ categoryId: null })
   }
 
-  const moveCategory = (id: Id, parentId: Id | null) => void app.moveCategory(id, parentId)
-  const toggleColor = (id: Id) => setColorOpenFor((cur) => (cur === id ? null : id))
+  const moveTo = (id: Id, parentId: Id | null) => {
+    void app.moveCategory(id, parentId)
+    setMenuOpenFor(null)
+  }
+  const toggleColor = (id: Id) => {
+    setMenuOpenFor(null)
+    setColorOpenFor((cur) => (cur === id ? null : id))
+  }
+  const toggleMenu = (id: Id) => {
+    setColorOpenFor(null)
+    setMenuOpenFor((cur) => (cur === id ? null : id))
+  }
   const pickColor = (id: Id, hex: string) => {
     void app.updateCategory(id, { color: hex })
     setColorOpenFor(null)
@@ -218,7 +238,6 @@ export function Sidebar({ open = false }: { open?: boolean }) {
     await app.createTag({ name })
     setNewTag('')
   }
-
   const deleteTag = (id: Id, name: string) => {
     if (!window.confirm(`删除标签「${name}」？`)) return
     app.deleteTag(id)
@@ -239,29 +258,85 @@ export function Sidebar({ open = false }: { open?: boolean }) {
       </section>
 
       <section>
-        <h2 className="display">分类</h2>
-        <div className="row">
-          <span className="twisty-spacer" />
+        <div className="section-head">
+          <h2 className="display">文件夹</h2>
           <button
             type="button"
-            className={state.filter.categoryId == null && !state.filter.uncategorized ? 'active' : ''}
-            onClick={() => app.setFilter({ categoryId: null, uncategorized: false })}
+            className="add-folder-btn"
+            aria-label="添加文件夹"
+            aria-expanded={addOpen}
+            onClick={() => (addOpen ? closeAdd() : openAdd())}
           >
-            全部
+            ＋
           </button>
-          <span className="count">{totalCount}</span>
         </div>
-        <div className="row">
-          <span className="twisty-spacer" />
-          <button
-            type="button"
-            className={state.filter.uncategorized ? 'active' : ''}
-            onClick={() => app.setFilter({ categoryId: null, uncategorized: true })}
-          >
-            未分类
-          </button>
-          <span className="count">{uncategorizedCount}</span>
-        </div>
+
+        {addOpen && (
+          <div className="add-folder">
+            <div className="row">
+              <input
+                aria-label="文件夹名称"
+                value={newCat}
+                onChange={(e) => setNewCat(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') confirmAdd()
+                }}
+                placeholder="文件夹名称"
+              />
+              <select aria-label="父文件夹" value={newCatParent} onChange={(e) => setNewCatParent(e.target.value as Id | '')}>
+                <option value="">顶级</option>
+                {parentOptions.map((t) => (
+                  <option key={t.category.id} value={t.category.id}>
+                    {'　'.repeat(t.depth) + t.category.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                className="color-dot"
+                style={{ background: newCatColor }}
+                aria-label="文件夹颜色"
+                onClick={() => setAddColorOpen((o) => !o)}
+              />
+              <button type="button" className="confirm" aria-label="确认添加" onClick={confirmAdd}>
+                ✓
+              </button>
+              <button type="button" className="del" aria-label="取消添加" onClick={closeAdd}>
+                ×
+              </button>
+            </div>
+            {addColorOpen && (
+              <ColorPicker
+                value={newCatColor}
+                presets={CATEGORY_PRESETS}
+                custom={customColors}
+                onPick={(hex) => {
+                  setNewCatColor(hex)
+                  setAddColorOpen(false)
+                }}
+                onAddCustom={addCustom}
+              />
+            )}
+          </div>
+        )}
+
+        <ul className="category-tree">
+          <li>
+            <div className="row">
+              <span className="twisty-spacer" />
+              <span className="color-dot-spacer" />
+              <button
+                type="button"
+                className={state.filter.uncategorized ? 'name active' : 'name'}
+                onClick={() => app.setFilter({ categoryId: null, uncategorized: true })}
+              >
+                未分类
+              </button>
+              <span className="count">{uncategorizedCount}</span>
+            </div>
+          </li>
+        </ul>
+
         <CategoryTree
           nodes={tree}
           categories={state.categories}
@@ -270,36 +345,16 @@ export function Sidebar({ open = false }: { open?: boolean }) {
           collapsed={collapsed}
           custom={customColors}
           colorOpenFor={colorOpenFor}
+          menuOpenFor={menuOpenFor}
           onPick={pickCategory}
           onDelete={deleteCategory}
           onToggle={toggleCollapse}
-          onMove={moveCategory}
+          onMove={moveTo}
           onToggleColor={toggleColor}
+          onToggleMenu={toggleMenu}
           onPickColor={pickColor}
           onAddCustom={addCustom}
         />
-        <div className="add-row">
-          <input
-            aria-label="新建分类"
-            value={newCat}
-            onChange={(e) => setNewCat(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') addCategory()
-            }}
-            placeholder="新建分类"
-          />
-          <select aria-label="父分类" value={newCatParent} onChange={(e) => setNewCatParent(e.target.value as Id | '')}>
-            <option value="">顶级</option>
-            {parentOptions.map((t) => (
-              <option key={t.category.id} value={t.category.id}>
-                {'　'.repeat(t.depth) + t.category.name}
-              </option>
-            ))}
-          </select>
-          <button type="button" onClick={addCategory}>
-            添加
-          </button>
-        </div>
       </section>
 
       <section>

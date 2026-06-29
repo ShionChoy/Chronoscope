@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { CATEGORY_PRESETS } from '../categoryColors'
 import { Sidebar } from './Sidebar'
 import { AppStoreProvider, createAppStore, type AppStore } from '../../state'
 import { createMemoryRepository, type Database, type Clock } from '../../data'
 import type { EventRecord, Category, Tag } from '../../domain/model'
+import { CATEGORY_PRESETS } from '../categoryColors'
 
 function makeApp(): AppStore {
   const db: Database = {
@@ -60,10 +60,31 @@ describe('Sidebar', () => {
     expect(app.store.getState().filter.tagMode).toBe('and')
   })
 
-  it('creates a category from the sidebar', async () => {
+  it('opens the add-folder form and creates a folder', async () => {
     renderSidebar()
-    await userEvent.type(screen.getByLabelText('新建分类'), '科技{Enter}')
+    await userEvent.click(screen.getByRole('button', { name: '添加文件夹' }))
+    await userEvent.type(screen.getByLabelText('文件夹名称'), '科技')
+    await userEvent.click(screen.getByRole('button', { name: '确认添加' }))
     expect(app.store.getState().categories.map((c) => c.name)).toContain('科技')
+  })
+
+  it('creates a sub-folder under a chosen parent', async () => {
+    const parent = await app.createCategory({ name: '历史' })
+    renderSidebar()
+    await userEvent.click(screen.getByRole('button', { name: '添加文件夹' }))
+    await userEvent.type(screen.getByLabelText('文件夹名称'), '近代')
+    await userEvent.selectOptions(screen.getByLabelText('父文件夹'), parent)
+    await userEvent.click(screen.getByRole('button', { name: '确认添加' }))
+    expect(app.store.getState().categories.find((c) => c.name === '近代')?.parentId).toBe(parent)
+  })
+
+  it('cancels adding a folder with ×', async () => {
+    renderSidebar()
+    await userEvent.click(screen.getByRole('button', { name: '添加文件夹' }))
+    await userEvent.type(screen.getByLabelText('文件夹名称'), '弃用')
+    await userEvent.click(screen.getByRole('button', { name: '取消添加' }))
+    expect(screen.queryByLabelText('文件夹名称')).toBeNull()
+    expect(app.store.getState().categories.map((c) => c.name)).not.toContain('弃用')
   })
 
   it('creates a tag from the sidebar', async () => {
@@ -77,6 +98,13 @@ describe('Sidebar', () => {
     await userEvent.click(screen.getByRole('button', { name: '未分类' }))
     expect(app.store.getState().filter.uncategorized).toBe(true)
     expect(app.store.getState().filter.categoryId).toBeNull()
+  })
+
+  it('the 未分类 folder exposes no color, menu, or delete controls', async () => {
+    renderSidebar()
+    expect(screen.queryByRole('button', { name: '设置「未分类」颜色' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '移动「未分类」' })).toBeNull()
+    expect(screen.queryByRole('button', { name: '删除分类「未分类」' })).toBeNull()
   })
 
   it('deletes a category after confirmation', async () => {
@@ -114,31 +142,13 @@ describe('Sidebar', () => {
     expect(row.querySelector('.count')?.textContent).toBe('2')
   })
 
-  it('creates a sub-category under a chosen parent', async () => {
-    const parent = await app.createCategory({ name: '历史' })
-    renderSidebar()
-    await userEvent.type(screen.getByLabelText('新建分类'), '近代')
-    await userEvent.selectOptions(screen.getByLabelText('父分类'), parent)
-    const addRow = screen.getByLabelText('新建分类').closest('.add-row') as HTMLElement
-    await userEvent.click(within(addRow).getByRole('button', { name: '添加' }))
-    expect(app.store.getState().categories.find((c) => c.name === '近代')?.parentId).toBe(parent)
-  })
-
-  it('moves a category to a new parent via the row select', async () => {
+  it('moves a category to a new parent via the menu', async () => {
     const a = await app.createCategory({ name: 'A' })
     const b = await app.createCategory({ name: 'B' })
     renderSidebar()
-    await userEvent.selectOptions(screen.getByLabelText('移动「B」'), a)
+    await userEvent.click(screen.getByRole('button', { name: '移动「B」' }))
+    await userEvent.click(screen.getByRole('menuitem', { name: '移至「A」' }))
     expect(app.store.getState().categories.find((c) => c.id === b)?.parentId).toBe(a)
-  })
-
-  it('keeps the "移动" placeholder out of the choosable target list', async () => {
-    await app.createCategory({ name: 'A' })
-    renderSidebar()
-    const sel = screen.getByLabelText('移动「A」')
-    const placeholder = sel.querySelector('option[value=""]') as HTMLOptionElement
-    expect(placeholder.disabled).toBe(true)
-    expect(placeholder.hidden).toBe(true)
   })
 
   it('sets a category color from the picker dot', async () => {

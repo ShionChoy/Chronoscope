@@ -143,7 +143,7 @@
    width), so a long name truncates with an ellipsis instead of wrapping. */
 .sidebar .row { display: flex; align-items: center; gap: 4px; }
 .sidebar .row > label,
-.sidebar .row > button:not(.del):not(.twisty):not(.color-dot) {
+.sidebar .row > button.name {
   flex: 1 1 0;
   min-width: 0;
   width: auto;
@@ -180,8 +180,9 @@
   border-radius: 4px;
 }
 .sidebar .del:hover { color: var(--now); background: var(--bg); }
-/* color dot (folder color indicator + picker trigger) */
-.color-dot {
+/* color dot — the `.sidebar` prefix outranks `.category-tree button`
+   (which sets border-radius:4px), so the dot is a true circle, not a square */
+.sidebar .color-dot {
   flex: 0 0 auto;
   width: 14px;
   height: 14px;
@@ -190,14 +191,67 @@
   border-radius: 50%;
   cursor: pointer;
 }
-/* per-row "move to parent" action select, kept compact in the 248px sidebar */
-.sidebar .row > select.move {
+.sidebar .color-dot-spacer { flex: 0 0 auto; width: 14px; }
+
+/* "文件夹" header row with its ＋ add button */
+.section-head { display: flex; align-items: center; gap: 4px; }
+.section-head h2 { flex: 1; }
+.sidebar .add-folder-btn,
+.sidebar .menu {
   flex: 0 0 auto;
-  max-width: 4.5em;
-  padding: 2px 4px;
-  font-size: 12px;
+  width: auto;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 2px 6px;
+  line-height: 1;
+  border-radius: 4px;
+  cursor: pointer;
 }
-.add-row select { flex: 0 0 auto; max-width: 7em; }
+.sidebar .add-folder-btn:hover,
+.sidebar .menu:hover { color: var(--text); background: var(--bg); }
+.sidebar .confirm {
+  flex: 0 0 auto;
+  width: auto;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  padding: 2px 6px;
+  line-height: 1;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.sidebar .confirm:hover { background: var(--bg); }
+
+/* inline add-folder form: name grows, parent select stays compact */
+.add-folder { display: flex; flex-direction: column; gap: 6px; }
+.add-folder .row > input { flex: 1 1 0; min-width: 0; }
+.add-folder select { flex: 0 0 auto; max-width: 6em; }
+
+/* folder move menu (hierarchy targets) — mirrors .color-picker */
+.move-menu {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  margin: 2px 0 6px 24px;
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.move-menu button {
+  text-align: left;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.move-menu button:hover { background: var(--bg); }
 
 /* color picker popover under a folder row */
 .color-picker {
