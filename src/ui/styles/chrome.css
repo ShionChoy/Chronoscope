@@ -37,7 +37,19 @@
 }
 .view-switch button.active { background: var(--accent); color: var(--surface); }
 
-.import-label { cursor: pointer; }
+/* 导入 is a <label> wrapping a hidden file input, so the base `button` skin
+   doesn't reach it — give it the same boxed look as the other top-bar buttons. */
+.import-label {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 12px;
+}
+.import-label:hover { border-color: var(--accent); }
 
 /* Secondary-action cluster: an inline row on wide screens, a "⋯" popover on
    narrow screens. nowrap + flex:0 0 auto stops CJK labels from being crushed
@@ -304,6 +316,10 @@ legend {
 .list-view tbody td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
 .list-view tbody tr:hover { background: var(--surface); }
 .list-view td.mono { color: var(--muted); white-space: nowrap; }
+/* Never let a cell collapse to one-character-per-line: CJK breaks between any
+   two characters, so a squeezed flexible column wraps vertically. Keep every
+   cell on a single line and let .view-area scroll horizontally instead. */
+.list-view th, .list-view td { white-space: nowrap; }
 .list-view .empty { padding: 24px; text-align: center; color: var(--muted); cursor: default; }
 
 /* ---------- detail card (augments the base box in tokens.css) ---------- */
@@ -338,12 +354,19 @@ legend {
 .event-card .markdown :last-child { margin-bottom: 0; }
 .event-card .actions { margin-top: 10px; }
 
-/* ---------- responsive drawer (phone) ---------- */
-.drawer-toggle { display: none; border: 0; background: transparent; font-size: 20px; padding: 4px 8px; }
+/* ---------- collapsible sidebar ---------- */
+/* The ☰ toggle is always available (not only on phones); it collapses/expands
+   the sidebar at every width. On desktop the sidebar is an in-flow column that
+   simply disappears when collapsed; on phones it becomes an overlay drawer. */
+.drawer-toggle { display: inline-flex; align-items: center; border: 0; background: transparent; font-size: 20px; padding: 4px 8px; }
 .drawer-backdrop { display: none; }
 
+/* desktop: collapsing just removes the column from the flow (no backdrop) */
+@media (min-width: 641px) {
+  .sidebar:not(.open) { display: none; }
+}
+
 @media (max-width: 640px) {
-  .drawer-toggle { display: inline-flex; align-items: center; }
   .sidebar {
     position: fixed;
     top: 52px;

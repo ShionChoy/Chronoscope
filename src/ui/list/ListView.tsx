@@ -1,6 +1,6 @@
 import { useAppStore, useAppState, visibleEvents } from '../../state'
 import type { Sort } from '../../state'
-import { formatTimeRange } from './timeText'
+import { formatTimeRange, formatUpdatedAt } from './timeText'
 import type { Id } from '../../domain/model'
 
 export interface ListViewProps {
@@ -64,7 +64,7 @@ export function ListView({ onEdit }: ListViewProps) {
             <td className="mono">{formatTimeRange(e.start, e.end, state.nowYear)}</td>
             <td>{e.title}</td>
             <td>{catName(e.categoryId)}</td>
-            <td className="mono col-updated">{e.updatedAt}</td>
+            <td className="mono col-updated">{formatUpdatedAt(e.updatedAt)}</td>
             <td>{tagNames(e.tagIds) || '—'}</td>
             <td className="col-note">{e.note.slice(0, 60)}</td>
           </tr>

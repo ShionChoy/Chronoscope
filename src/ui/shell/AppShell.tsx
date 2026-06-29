@@ -17,7 +17,15 @@ function ShellBody({ fileSync }: { fileSync?: FileSync }) {
   const state = useAppState()
   const [editor, setEditor] = useState<EditorTarget>(null)
   const trapRef = useFocusTrap<HTMLDivElement>(editor !== null, () => setEditor(null))
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  // The sidebar can be collapsed/expanded at any width. Default it open on a
+  // desktop-width viewport and closed on a narrow one (where it's an overlay
+  // drawer). matchMedia is absent in jsdom → fall back to closed for tests.
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () =>
+      typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+        ? window.matchMedia('(min-width: 641px)').matches
+        : false,
+  )
 
   // useLayoutEffect (not useEffect): the DOM `data-theme` must be set during the
   // commit phase, before TimelineView's passive draw effect reads the CSS
@@ -56,12 +64,12 @@ function ShellBody({ fileSync }: { fileSync?: FileSync }) {
         onNew={() => setEditor('new')}
         onExport={doExport}
         onImportFile={doImport}
-        sidebarOpen={drawerOpen}
-        onToggleSidebar={() => setDrawerOpen((o) => !o)}
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={() => setSidebarOpen((o) => !o)}
         fileSync={fileSync}
       />
       <div className="body">
-        <Sidebar open={drawerOpen} />
+        <Sidebar open={sidebarOpen} />
         <main className="view-area">
           {state.view === 'list' ? (
             <ListView onEdit={(id) => setEditor(id)} />
@@ -69,7 +77,7 @@ function ShellBody({ fileSync }: { fileSync?: FileSync }) {
             <TimelineView onEdit={(id) => setEditor(id)} />
           )}
         </main>
-        {drawerOpen && <div className="drawer-backdrop" onClick={() => setDrawerOpen(false)} />}
+        {sidebarOpen && <div className="drawer-backdrop" onClick={() => setSidebarOpen(false)} />}
       </div>
       {editor !== null && (
         <div className="modal-overlay" onClick={() => setEditor(null)}>
