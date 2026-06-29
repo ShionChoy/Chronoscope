@@ -79,7 +79,7 @@ export function drawScene(
   // glyphs
   for (const g of scene.detail.glyphs) {
     const y = layout.glyphTop + g.row * layout.rowHeight
-    const color = g.selected ? colors.now : colors.accent
+    const color = g.selected ? colors.now : (g.color ?? colors.accent)
 
     // fuzzy whiskers — horizontal lines first (the core will sit on top)
     ctx.strokeStyle = colors.muted

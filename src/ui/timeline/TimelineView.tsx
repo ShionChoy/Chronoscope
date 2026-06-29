@@ -34,6 +34,12 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
   const events = useMemo(() => visibleEvents(state), [state])
   const nowYear = state.nowYear
 
+  const categoryColors = useMemo(() => {
+    const m = new Map<Id, string>()
+    for (const c of state.categories) if (!c.deleted) m.set(c.id, c.color)
+    return m
+  }, [state.categories])
+
   // Navigable range = padded extent of every event's start AND end instants.
   // The view is clamped to this, so the rightmost reachable edge is the latest
   // event (and the leftmost the earliest), with no empty space beyond the data.
@@ -85,7 +91,7 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
     const dpr = window.devicePixelRatio || 1
     canvas.width = size.w * dpr
     canvas.height = size.h * dpr
-    const scene = buildScene({ events, view, overview, nowYear, width: size.w, selectedId: state.selectedId })
+    const scene = buildScene({ events, view, overview, nowYear, width: size.w, selectedId: state.selectedId, categoryColors })
     const layout = computeLayout(size.h)
     sceneRef.current = scene
     layoutRef.current = layout
@@ -93,7 +99,7 @@ export function TimelineView({ onEdit }: TimelineViewProps) {
     if (!ctx) return // jsdom / unsupported: scene is still computed, just not painted
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     drawScene(ctx, scene, readColors(canvas), layout)
-  }, [events, view, overview, nowYear, size, state.selectedId, state.theme])
+  }, [events, view, overview, nowYear, size, state.selectedId, state.theme, categoryColors])
 
   // pointer interactions
   const drag = useRef<{ x: number; mode: 'pan' | 'lens' | 'overviewPan'; moved: boolean } | null>(null)

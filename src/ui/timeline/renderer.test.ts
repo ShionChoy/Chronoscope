@@ -12,6 +12,7 @@ const COLORS: TimelineColors = {
 function fakeCtx() {
   const calls: string[] = []
   const styles: string[] = []
+  const fills: string[] = []
   const method = (name: string) => (...args: unknown[]) => calls.push(`${name}(${args.length})`)
   const ctx = {
     calls,
@@ -34,13 +35,17 @@ function fakeCtx() {
       calls.push(`createLinearGradient(${args.length})`)
       return { addColorStop: () => {} }
     },
-    set fillStyle(_v: string) {},
+    set fillStyle(v: string) { fills.push(v) },
     set strokeStyle(v: string) { styles.push(v) },
     set font(_v: string) {},
     set lineWidth(_v: number) {},
     set globalAlpha(_v: number) {},
   }
-  return ctx as unknown as CanvasRenderingContext2D & { calls: string[]; styles: string[] }
+  return Object.assign(ctx, { fills }) as unknown as CanvasRenderingContext2D & {
+    calls: string[]
+    styles: string[]
+    fills: string[]
+  }
 }
 
 const scene: TimelineScene = {
@@ -116,5 +121,21 @@ describe('renderer', () => {
     drawScene(withoutW, bare, COLORS, computeLayout(400))
     const lineTos = (c: ReturnType<typeof fakeCtx>) => c.calls.filter((x) => x.startsWith('lineTo(')).length
     expect(lineTos(withW)).toBeGreaterThan(lineTos(withoutW))
+  })
+  it('fills a glyph with its category color, falling back to accent', () => {
+    const ctx = fakeCtx()
+    const s: TimelineScene = {
+      ...scene,
+      detail: {
+        ...scene.detail,
+        glyphs: [
+          { eventId: 'a', kind: 'span', xStart: 100, xEnd: 300, whiskers: [], row: 0, selected: false, color: '#abcdef', title: 'A' },
+          { eventId: 'b', kind: 'point', xStart: 500, xEnd: 500, whiskers: [], row: 1, selected: false, title: 'B' },
+        ],
+      },
+    }
+    drawScene(ctx, s, COLORS, computeLayout(400))
+    expect(ctx.fills).toContain('#abcdef') // categorized glyph uses its color
+    expect(ctx.fills).toContain(COLORS.accent) // uncategorized glyph falls back to accent
   })
 })
