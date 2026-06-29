@@ -324,7 +324,9 @@ export function Sidebar({ open = false }: { open?: boolean }) {
           <li>
             <div className="row">
               <span className="twisty-spacer" />
-              <span className="color-dot-spacer" />
+              {/* 未分类 is not a real category, so its dot is a fixed neutral
+                  gray and is not a recolor trigger */}
+              <span className="color-dot" style={{ background: 'var(--muted)', cursor: 'default' }} aria-hidden="true" />
               <button
                 type="button"
                 className={state.filter.uncategorized ? 'name active' : 'name'}

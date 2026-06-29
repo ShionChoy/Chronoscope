@@ -115,6 +115,15 @@ describe('Sidebar', () => {
     expect(screen.queryByRole('button', { name: '删除分类「未分类」' })).toBeNull()
   })
 
+  it('shows a default gray (non-interactive) dot on the 未分类 folder', () => {
+    renderSidebar()
+    const row = screen.getByRole('button', { name: '未分类' }).closest('.row') as HTMLElement
+    const dot = row.querySelector('.color-dot') as HTMLElement
+    expect(dot).not.toBeNull()
+    expect(dot.tagName).toBe('SPAN') // a plain dot, not a recolor button
+    expect(dot.style.background).toContain('--muted')
+  })
+
   it('deletes a category after confirmation', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     const id = await app.createCategory({ name: '科技' })
