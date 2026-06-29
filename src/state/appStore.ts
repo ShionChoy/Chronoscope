@@ -10,6 +10,7 @@ import {
   type ExportFile,
 } from '../data'
 import type { EventRecord, Category, Tag, Id } from '../domain/model'
+import type { LinearView } from '../domain/time'
 import { createStore, type Store } from './store'
 import { descendantCategoryIds } from './selectors'
 import { initialAppState, type AppState, type Filter, type Sort, type Theme, type View } from './types'
@@ -39,6 +40,8 @@ export interface AppStore {
   setView(view: View): void
   setSort(sort: Sort): void
   setTheme(theme: Theme): void
+  setTimelineView(updater: LinearView | ((prev: LinearView | null) => LinearView)): void
+  setTimelineOverview(updater: LinearView | ((prev: LinearView | null) => LinearView)): void
   exportSnapshot(): Promise<ExportFile>
   importSnapshot(file: ExportFile): Promise<void>
 }
@@ -198,6 +201,18 @@ export function createAppStore(deps: AppStoreDeps): AppStore {
     },
     setTheme(t) {
       store.setState((s) => ({ ...s, theme: t }))
+    },
+    setTimelineView(updater) {
+      store.setState((s) => ({
+        ...s,
+        timelineView: typeof updater === 'function' ? updater(s.timelineView) : updater,
+      }))
+    },
+    setTimelineOverview(updater) {
+      store.setState((s) => ({
+        ...s,
+        timelineOverview: typeof updater === 'function' ? updater(s.timelineOverview) : updater,
+      }))
     },
 
     async exportSnapshot() {

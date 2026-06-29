@@ -140,4 +140,18 @@ describe('appStore', () => {
     await app2.importSnapshot(file)
     expect(app2.store.getState().events.map((e) => e.title)).toContain('keep')
   })
+
+  it('setTimelineView stores a value and supports functional updates', () => {
+    expect(app.store.getState().timelineView).toBeNull()
+    app.setTimelineView({ min: 0, max: 100 })
+    expect(app.store.getState().timelineView).toEqual({ min: 0, max: 100 })
+    app.setTimelineView((prev) => ({ min: prev!.min, max: prev!.max + 50 }))
+    expect(app.store.getState().timelineView).toEqual({ min: 0, max: 150 })
+  })
+
+  it('setTimelineOverview supports a functional update starting from null', () => {
+    expect(app.store.getState().timelineOverview).toBeNull()
+    app.setTimelineOverview((prev) => (prev ? prev : { min: -10, max: 10 }))
+    expect(app.store.getState().timelineOverview).toEqual({ min: -10, max: 10 })
+  })
 })
