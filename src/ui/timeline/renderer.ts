@@ -79,7 +79,9 @@ export function drawScene(
   // glyphs
   for (const g of scene.detail.glyphs) {
     const y = layout.glyphTop + g.row * layout.rowHeight
-    const color = g.selected ? colors.now : (g.color ?? colors.accent)
+    // uncategorized glyphs (no category color) fall back to muted gray — the
+    // same neutral as the 未分类 folder's dot
+    const color = g.selected ? colors.now : (g.color ?? colors.muted)
 
     // fuzzy whiskers — horizontal lines first (the core will sit on top)
     ctx.strokeStyle = colors.muted

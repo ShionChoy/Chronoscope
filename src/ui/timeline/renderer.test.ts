@@ -122,7 +122,7 @@ describe('renderer', () => {
     const lineTos = (c: ReturnType<typeof fakeCtx>) => c.calls.filter((x) => x.startsWith('lineTo(')).length
     expect(lineTos(withW)).toBeGreaterThan(lineTos(withoutW))
   })
-  it('fills a glyph with its category color, falling back to accent', () => {
+  it('fills a glyph with its category color, falling back to muted gray', () => {
     const ctx = fakeCtx()
     const s: TimelineScene = {
       ...scene,
@@ -136,6 +136,6 @@ describe('renderer', () => {
     }
     drawScene(ctx, s, COLORS, computeLayout(400))
     expect(ctx.fills).toContain('#abcdef') // categorized glyph uses its color
-    expect(ctx.fills).toContain(COLORS.accent) // uncategorized glyph falls back to accent
+    expect(ctx.fills).toContain(COLORS.muted) // uncategorized glyph falls back to muted gray
   })
 })
