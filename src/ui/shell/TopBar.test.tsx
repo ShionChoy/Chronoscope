@@ -23,8 +23,8 @@ beforeEach(() => {
   app = makeApp()
 })
 
-function renderTopBar(over: Partial<{ onNew: () => void; onExport: () => void; onImportFile: (f: File) => void }> = {}) {
-  const props = { onNew: vi.fn(), onExport: vi.fn(), onImportFile: vi.fn(), ...over }
+function renderTopBar(over: Partial<{ onNew: () => void }> = {}) {
+  const props = { onNew: vi.fn(), ...over }
   render(
     <AppStoreProvider value={app}>
       <TopBar {...props} />
@@ -44,18 +44,10 @@ describe('TopBar', () => {
     await userEvent.click(screen.getByRole('button', { name: '主题' }))
     expect(app.store.getState().theme).toBe('night')
   })
-  it('fires onNew and onExport', async () => {
+  it('fires onNew', async () => {
     const props = renderTopBar()
     await userEvent.click(screen.getByRole('button', { name: '新建' }))
-    await userEvent.click(screen.getByRole('button', { name: '导出' }))
     expect(props.onNew).toHaveBeenCalled()
-    expect(props.onExport).toHaveBeenCalled()
-  })
-  it('passes a chosen file to onImportFile', async () => {
-    const props = renderTopBar()
-    const file = new File(['{}'], 'snap.json', { type: 'application/json' })
-    await userEvent.upload(screen.getByLabelText('导入'), file)
-    expect(props.onImportFile).toHaveBeenCalledWith(file)
   })
   it('opens and closes the overflow menu', async () => {
     renderTopBar()
@@ -64,7 +56,7 @@ describe('TopBar', () => {
     await userEvent.click(toggle)
     expect(toggle.getAttribute('aria-expanded')).toBe('true')
     // clicking an action inside the menu closes it again
-    await userEvent.click(screen.getByRole('button', { name: '导出' }))
+    await userEvent.click(screen.getByRole('button', { name: '主题' }))
     expect(toggle.getAttribute('aria-expanded')).toBe('false')
   })
 })

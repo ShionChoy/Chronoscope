@@ -129,18 +129,6 @@ describe('appStore', () => {
     expect(app.store.getState().selectedId).toBeNull()
   })
 
-  it('exportSnapshot/importSnapshot round-trips through the data layer', async () => {
-    await app.createEvent({ title: 'keep' })
-    const file = await app.exportSnapshot()
-    expect(file.events.map((e) => e.title)).toEqual(['keep'])
-    // a second store importing the file ends up with the event
-    const db2 = makeDb()
-    const { clock, genId } = fixtures()
-    const app2 = createAppStore({ db: db2, clock, nowYear: 2026, theme: 'day', genId })
-    await app2.importSnapshot(file)
-    expect(app2.store.getState().events.map((e) => e.title)).toContain('keep')
-  })
-
   it('setTimelineView stores a value and supports functional updates', () => {
     expect(app.store.getState().timelineView).toBeNull()
     app.setTimelineView({ min: 0, max: 100 })

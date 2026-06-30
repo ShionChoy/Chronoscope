@@ -37,27 +37,12 @@
 }
 .view-switch button.active { background: var(--accent); color: var(--surface); }
 
-/* 导入 is a <label> wrapping a hidden file input, so the base `button` skin
-   doesn't reach it — give it the same boxed look as the other top-bar buttons. */
-.import-label {
-  display: inline-flex;
-  align-items: center;
-  cursor: pointer;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 6px 12px;
-}
-.import-label:hover { border-color: var(--accent); }
-
 /* Secondary-action cluster: an inline row on wide screens, a "⋯" popover on
    narrow screens. nowrap + flex:0 0 auto stops CJK labels from being crushed
    into one-character-per-line columns at any width. */
 .topbar > button,
 .view-switch button,
-.topbar-actions > button,
-.topbar-actions > .import-label {
+.topbar-actions > button {
   white-space: nowrap;
   flex: 0 0 auto;
 }

@@ -27,7 +27,3 @@ export function createClock(nodeId: string, physicalNow: () => number = () => Da
     },
   }
 }
-
-export function compareHLC(a: string, b: string): number {
-  return a < b ? -1 : a > b ? 1 : 0
-}

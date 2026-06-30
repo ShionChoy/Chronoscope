@@ -2,12 +2,9 @@ import {
   newEvent,
   touch,
   softDelete,
-  exportData,
-  importData,
   type Database,
   type Clock,
   type NewEventFields,
-  type ExportFile,
 } from '../data'
 import type { EventRecord, Category, Tag, Id } from '../domain/model'
 import type { LinearView } from '../domain/time'
@@ -49,8 +46,6 @@ export interface AppStore {
   setTheme(theme: Theme): void
   setTimelineView(updater: LinearView | ((prev: LinearView | null) => LinearView)): void
   setTimelineOverview(updater: LinearView | ((prev: LinearView | null) => LinearView)): void
-  exportSnapshot(): Promise<ExportFile>
-  importSnapshot(file: ExportFile): Promise<void>
 }
 
 // replace the record with matching id, or append if new
@@ -305,14 +300,6 @@ export function createAppStore(deps: AppStoreDeps): AppStore {
         ...s,
         timelineOverview: typeof updater === 'function' ? updater(s.timelineOverview) : updater,
       }))
-    },
-
-    async exportSnapshot() {
-      return exportData(db)
-    },
-    async importSnapshot(file) {
-      await importData(file, db)
-      await load()
     },
   }
 }

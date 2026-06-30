@@ -1,19 +1,16 @@
 import { useLayoutEffect, useState } from 'react'
-import { AppStoreProvider, useAppStore, useAppState, applyTheme, persistTheme, type AppStore } from '../../state'
-import type { FileSync } from '../../data'
+import { AppStoreProvider, useAppState, applyTheme, persistTheme, type AppStore } from '../../state'
 import { TopBar } from './TopBar'
 import { Sidebar } from './Sidebar'
 import { ListView } from '../list/ListView'
 import { TimelineView } from '../timeline/TimelineView'
 import { EventEditor } from '../editor/EventEditor'
-import { exportFilename, serializeSnapshot, parseSnapshot } from './transfer'
 import { useFocusTrap } from './useFocusTrap'
 import type { Id } from '../../domain/model'
 
 type EditorTarget = Id | 'new' | null
 
-function ShellBody({ fileSync }: { fileSync?: FileSync }) {
-  const app = useAppStore()
+function ShellBody() {
   const state = useAppState()
   const [editor, setEditor] = useState<EditorTarget>(null)
   const trapRef = useFocusTrap<HTMLDivElement>(editor !== null, () => setEditor(null))
@@ -37,36 +34,12 @@ function ShellBody({ fileSync }: { fileSync?: FileSync }) {
     persistTheme(window.localStorage, state.theme)
   }, [state.theme])
 
-  const doExport = async () => {
-    const file = await app.exportSnapshot()
-    const blob = new Blob([serializeSnapshot(file)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = exportFilename(new Date())
-    // Firefox honours the download attribute only for an in-document anchor,
-    // and revoking the URL synchronously can cancel a deferred download — so
-    // append, click, remove, then revoke on the next tick.
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    setTimeout(() => URL.revokeObjectURL(url), 0)
-  }
-
-  const doImport = async (file: File) => {
-    const text = await file.text()
-    await app.importSnapshot(parseSnapshot(text))
-  }
-
   return (
     <div className="app-shell">
       <TopBar
         onNew={() => setEditor('new')}
-        onExport={doExport}
-        onImportFile={doImport}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => setSidebarOpen((o) => !o)}
-        fileSync={fileSync}
       />
       <div className="body">
         <Sidebar open={sidebarOpen} />
@@ -92,13 +65,12 @@ function ShellBody({ fileSync }: { fileSync?: FileSync }) {
 
 export interface AppShellProps {
   app: AppStore
-  fileSync?: FileSync
 }
 
-export function AppShell({ app, fileSync }: AppShellProps) {
+export function AppShell({ app }: AppShellProps) {
   return (
     <AppStoreProvider value={app}>
-      <ShellBody fileSync={fileSync} />
+      <ShellBody />
     </AppStoreProvider>
   )
 }

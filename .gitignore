@@ -4,6 +4,9 @@
 # Local-only design docs (specs & plans kept out of the published repo)
 docs/
 
+# Local-only sample/debug data exports
+fixtures/
+
 # Dependencies
 node_modules/
 
