@@ -262,4 +262,18 @@ describe('appStore', () => {
     expect((await db.events.get('id1'))?.categoryId).toBeNull()
     expect((await db.events.get('id1'))?.tagIds).toEqual([])
   })
+
+  it('deleteEvent removes the id from checkedIds too', async () => {
+    await app.createEvent({ title: 'a' }) // id1
+    await app.createEvent({ title: 'b' }) // id2
+    app.setChecked(['id1', 'id2'])
+    await app.deleteEvent('id1')
+    expect(app.store.getState().checkedIds).toEqual(['id2'])
+  })
+
+  it('deleteEvents([]) still clears the checked selection', async () => {
+    app.setChecked(['id1'])
+    await app.deleteEvents([])
+    expect(app.store.getState().checkedIds).toEqual([])
+  })
 })

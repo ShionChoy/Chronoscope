@@ -116,6 +116,8 @@ export function createAppStore(deps: AppStoreDeps): AppStore {
         ...s,
         events: upsert(s.events, next),
         selectedId: s.selectedId === id ? null : s.selectedId,
+        // keep the batch (checkbox) selection coherent with what still exists
+        checkedIds: s.checkedIds.filter((x) => x !== id),
       }))
     },
 
